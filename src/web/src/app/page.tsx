@@ -1,10 +1,14 @@
+import { CampaignProvider } from './context/CampaignContext';
+import ChatPanel from './components/ChatPanel';
+import TimelinePanel from './components/TimelinePanel';
+
 export default function Home() {
   return (
-    <main className="flex min-h-[80vh] flex-col items-center justify-center px-4 text-center">
-      <h1 className="mb-4 text-4xl font-bold text-gray-900">spec2cloud</h1>
-      <p className="mb-8 max-w-md text-lg text-gray-600">
-        Application shell ready for development.
-      </p>
-    </main>
+    <CampaignProvider>
+      <main className="flex flex-col md:flex-row h-[calc(100vh-49px)]">
+        <ChatPanel className="w-full h-1/2 md:h-full md:w-3/5 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700" />
+        <TimelinePanel className="w-full h-1/2 md:h-full md:w-2/5" />
+      </main>
+    </CampaignProvider>
   );
 }

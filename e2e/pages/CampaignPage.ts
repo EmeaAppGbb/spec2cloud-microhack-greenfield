@@ -66,7 +66,8 @@ export class CampaignPage {
   }
 
   async getTimelineStageStatus(stageName: string): Promise<string> {
-    const stage = this.page.getByTestId(`timeline-stage-${stageName.toLowerCase()}`);
+    const stageId = stageName.toLowerCase().replace(/ /g, '-');
+    const stage = this.page.getByTestId(`timeline-stage-${stageId}`);
     const status = await stage.getAttribute('data-status');
     return status ?? 'unknown';
   }

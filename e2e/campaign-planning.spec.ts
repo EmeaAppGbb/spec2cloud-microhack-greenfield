@@ -1,16 +1,16 @@
 import { test, expect } from './fixtures';
 import { CampaignPage } from './pages/CampaignPage';
 
-const TIMELINE_STAGES = ['Planning', 'Creative', 'Review', 'Scheduling', 'Publishing', 'Analytics'] as const;
+const TIMELINE_STAGES = ['Planning', 'Generating', 'Reviewing', 'Awaiting-Approval', 'Localizing', 'Complete'] as const;
 
 const PLAN_FIELD_NAMES = [
   'campaign-name',
+  'objective',
   'target-audience',
   'platform',
   'tone',
+  'visual-direction',
   'key-messages',
-  'timeline',
-  'budget',
 ] as const;
 
 const SAMPLE_BRIEF =

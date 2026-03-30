@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import pinoHttp from 'pino-http';
 import { logger } from './logger.js';
 import { mapHealthEndpoints } from './routes/health.js';
+import { mapCampaignEndpoints } from './routes/campaign.js';
 
 export function createApp(): express.Express {
   const app = express();
@@ -18,6 +19,7 @@ export function createApp(): express.Express {
 
   // Routes
   mapHealthEndpoints(app);
+  mapCampaignEndpoints(app);
 
   return app;
 }
