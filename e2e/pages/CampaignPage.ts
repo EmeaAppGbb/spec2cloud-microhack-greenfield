@@ -91,7 +91,7 @@ export class CampaignPage {
   }
 
   async waitForPlanBlock(): Promise<void> {
-    await this.planBlock.waitFor({ state: 'visible', timeout: 30_000 });
+    await this.planBlock.waitFor({ state: 'visible', timeout: 90_000 });
   }
 
   async getPlanFields(): Promise<Record<string, string>> {

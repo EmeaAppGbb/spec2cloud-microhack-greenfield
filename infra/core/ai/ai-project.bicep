@@ -135,7 +135,7 @@ resource aiAccount 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
 
 
 // Create connection towards appinsights
-resource appInsightConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = {
+resource appInsightConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = if (enableMonitoring) {
   parent: aiAccount::project
   name: 'appi-connection'
   properties: {
@@ -285,11 +285,11 @@ output aiServicesAccountName string = aiAccount.name
 output aiServicesProjectName string = aiAccount::project.name
 output aiServicesPrincipalId string = aiAccount.identity.principalId
 output projectName string = aiAccount::project.name
-output APPLICATIONINSIGHTS_CONNECTION_STRING string = applicationInsights.outputs.connectionString
-output applicationInsightsResourceId string = applicationInsights.outputs.id
-output applicationInsightsName string = applicationInsights.outputs.name
-output applicationInsightsInstrumentationKey string = applicationInsights.outputs.instrumentationKey
-output logAnalyticsWorkspaceId string = logAnalytics.outputs.id
+output APPLICATIONINSIGHTS_CONNECTION_STRING string = enableMonitoring ? applicationInsights.outputs.connectionString : ''
+output applicationInsightsResourceId string = enableMonitoring ? applicationInsights.outputs.id : ''
+output applicationInsightsName string = enableMonitoring ? applicationInsights.outputs.name : ''
+output applicationInsightsInstrumentationKey string = enableMonitoring ? applicationInsights.outputs.instrumentationKey : ''
+output logAnalyticsWorkspaceId string = enableMonitoring ? logAnalytics.outputs.id : ''
 
 // Grouped dependent resources outputs
 output dependentResources object = {

@@ -152,6 +152,10 @@ module api 'br/public:avm/ptn/azd/container-app-upsert:0.1.1' = {
         name: 'JWT_SECRET'
         value: uniqueString(subscription().id, resourceToken, 'jwt-secret')
       }
+      {
+        name: 'AZURE_OPENAI_ENDPOINT'
+        value: aiProject.outputs.AZURE_OPENAI_ENDPOINT
+      }
     ]
     containerAppsEnvironmentName: containerApps.outputs.environmentName
     containerRegistryName: containerApps.outputs.registryName
@@ -169,7 +173,46 @@ module api 'br/public:avm/ptn/azd/container-app-upsert:0.1.1' = {
   }
 }
 
+// AI — Azure OpenAI via AI Foundry
+module aiProject 'core/ai/ai-project.bicep' = {
+  name: 'ai-project'
+  scope: rg
+  params: {
+    location: location
+    tags: tags
+    aiFoundryProjectName: 'campaign-ai-${resourceToken}'
+    enableMonitoring: false // main.bicep already deploys Log Analytics + AppInsights
+    additionalDependentResources: []
+    deployments: [
+      {
+        name: 'gpt-5-4-mini'
+        model: { name: 'gpt-5.4-mini', format: 'OpenAI', version: '2026-03-17' }
+        sku: { name: 'GlobalStandard', capacity: 10 }
+      }
+      {
+        name: 'gpt-image-1-5'
+        model: { name: 'gpt-image-1.5', format: 'OpenAI', version: '2025-12-16' }
+        sku: { name: 'GlobalStandard', capacity: 1 }
+      }
+    ]
+    principalId: principalId
+    principalType: principalType
+  }
+}
+
+// Grant API managed identity Cognitive Services User role on resource group
+module apiCognitiveServicesRole 'core/security/role-assignment.bicep' = {
+  name: 'api-cognitive-services-role'
+  scope: rg
+  params: {
+    principalId: apiIdentity.outputs.principalId
+    roleDefinitionId: 'a97b65f3-24c7-4388-baec-2e87135dc908' // Cognitive Services User
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // App outputs
+output AZURE_OPENAI_ENDPOINT string = aiProject.outputs.AZURE_OPENAI_ENDPOINT
 output APPLICATIONINSIGHTS_CONNECTION_STRING string = applicationInsights.outputs.connectionString
 output AZURE_CONTAINER_ENVIRONMENT_NAME string = containerApps.outputs.environmentName
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerApps.outputs.registryLoginServer

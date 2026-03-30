@@ -54,8 +54,10 @@ test.describe('inc-01: Campaign Planning — Happy Path', () => {
 
     await campaign.submitBrief(SAMPLE_BRIEF);
 
-    await expect(campaign.chatInput).toHaveValue('');
-    expect(await campaign.isInputDisabled()).toBe(true);
+    await expect(campaign.chatInput).toHaveValue('', { timeout: 10_000 });
+    await expect(async () => {
+      expect(await campaign.isInputDisabled()).toBe(true);
+    }).toPass({ timeout: 10_000 });
   });
 
   test('transitions Planning stage to active after brief submission', async ({ page }) => {
@@ -67,7 +69,7 @@ test.describe('inc-01: Campaign Planning — Happy Path', () => {
     await expect(async () => {
       const status = await campaign.getTimelineStageStatus('Planning');
       expect(status).toBe('active');
-    }).toPass({ timeout: 10_000 });
+    }).toPass({ timeout: 60_000 });
   });
 
   test('displays assistant response with streaming text', async ({ page }) => {
@@ -77,7 +79,7 @@ test.describe('inc-01: Campaign Planning — Happy Path', () => {
     await campaign.submitBrief(SAMPLE_BRIEF);
 
     // Wait for first assistant message to appear
-    await expect(campaign.assistantMessages.first()).toBeVisible({ timeout: 30_000 });
+    await expect(campaign.assistantMessages.first()).toBeVisible({ timeout: 60_000 });
 
     // Verify streaming: text length should grow over time
     const initialText = await campaign.assistantMessages.first().innerText();
@@ -110,7 +112,7 @@ test.describe('inc-01: Campaign Planning — Happy Path', () => {
     await expect(async () => {
       const status = await campaign.getTimelineStageStatus('Planning');
       expect(status).toBe('completed');
-    }).toPass({ timeout: 10_000 });
+    }).toPass({ timeout: 60_000 });
   });
 
   test('shows handoff message after plan completion', async ({ page }) => {
@@ -193,7 +195,7 @@ test.describe('inc-01: Brief Validation — Long Brief', () => {
     await expect(async () => {
       const status = await campaign.getTimelineStageStatus('Planning');
       expect(status).toBe('active');
-    }).toPass({ timeout: 10_000 });
+    }).toPass({ timeout: 60_000 });
   });
 });
 

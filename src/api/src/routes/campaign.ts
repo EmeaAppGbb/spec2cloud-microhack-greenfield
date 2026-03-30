@@ -141,6 +141,60 @@ export function mapCampaignEndpoints(app: Express): void {
     }
   });
 
+  // Diagnostic endpoint — test Azure OpenAI image generation
+  app.get('/api/debug/image-test', async (_req, res) => {
+    try {
+      const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+      if (!endpoint) {
+        res.json({ error: 'AZURE_OPENAI_ENDPOINT not set' });
+        return;
+      }
+
+      const { DefaultAzureCredential } = await import('@azure/identity');
+      const credential = new DefaultAzureCredential();
+      const token = await credential.getToken('https://cognitiveservices.azure.com/.default');
+
+      const url = `${endpoint}openai/deployments/gpt-image-1-5/images/generations?api-version=2025-04-01-preview`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token.token}`,
+        },
+        body: JSON.stringify({
+          prompt: 'A simple red circle on a white background',
+          n: 1,
+          size: '1024x1024',
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        res.json({ error: errText, status: response.status });
+        return;
+      }
+
+      const result = await response.json() as { data: Array<{ b64_json?: string; url?: string }> };
+      const data = result.data?.[0];
+      res.json({
+        success: true,
+        hasB64: !!data?.b64_json,
+        hasUrl: !!data?.url,
+        b64Length: data?.b64_json?.length ?? 0,
+        keys: Object.keys(data ?? {}),
+      });
+    } catch (err) {
+      const e = err as Error & { status?: number; code?: string; type?: string };
+      res.json({
+        error: e.message,
+        status: e.status,
+        code: e.code,
+        type: e.type,
+        name: e.name,
+      });
+    }
+  });
+
   // SSE streaming endpoint — delivers campaign events to frontend
   app.get('/api/campaign/:campaignId/stream', (req, res) => {
     const { campaignId } = req.params;

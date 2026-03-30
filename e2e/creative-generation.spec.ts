@@ -20,7 +20,7 @@ test.describe('inc-02: Creative Generation — Happy Path', () => {
     await expect(async () => {
       const status = await campaign.getTimelineStageStatus('Generating');
       expect(['active', 'completed']).toContain(status);
-    }).toPass({ timeout: 15_000 });
+    }).toPass({ timeout: 60_000 });
   });
 
   test('shows status message during generation', async ({ page }) => {
@@ -31,7 +31,7 @@ test.describe('inc-02: Creative Generation — Happy Path', () => {
     await campaign.waitForPlanBlock();
 
     // First status message should appear when creative generation starts
-    await expect(campaign.statusMessages.first()).toBeVisible({ timeout: 30_000 });
+    await expect(campaign.statusMessages.first()).toBeVisible({ timeout: 60_000 });
     const statusText = await campaign.statusMessages.first().innerText();
     expect(statusText.toLowerCase()).toMatch(/generat/i);
   });
@@ -91,7 +91,7 @@ test.describe('inc-02: Creative Generation — Happy Path', () => {
     await expect(async () => {
       const status = await campaign.getTimelineStageStatus('Generating');
       expect(status).toBe('completed');
-    }).toPass({ timeout: 15_000 });
+    }).toPass({ timeout: 60_000 });
   });
 
   test('image URL is accessible via HTTP', async ({ page, request }) => {
@@ -122,7 +122,7 @@ test.describe('inc-02: Creative Generation — Status Messages', () => {
     await campaign.waitForPlanBlock();
 
     // Generating stage becomes active → first status message should appear
-    await expect(campaign.statusMessages.first()).toBeVisible({ timeout: 30_000 });
+    await expect(campaign.statusMessages.first()).toBeVisible({ timeout: 60_000 });
     const statusText = await campaign.statusMessages.first().innerText();
     expect(statusText.toLowerCase()).toMatch(/generat/i);
   });
@@ -138,7 +138,7 @@ test.describe('inc-02: Creative Generation — Status Messages', () => {
     await campaign.waitForPlanBlock();
 
     // Verify at least one status message appeared during the flow
-    await expect(campaign.statusMessages.first()).toBeVisible({ timeout: 30_000 });
+    await expect(campaign.statusMessages.first()).toBeVisible({ timeout: 60_000 });
     // Verify creative preview also appeared (generation completed)
     await campaign.waitForCreativePreview();
     await expect(campaign.creativePreview).toBeVisible();

@@ -328,6 +328,52 @@ graph TB
 
 ---
 
+## Infrastructure Resources
+
+All Azure resources required by the application, mapped to increments.
+Full specification: `specs/contracts/infra/resources.yaml`
+
+| Resource | Azure Type | SKU | Auth | First Increment |
+|----------|-----------|-----|------|-----------------|
+| API Container App | Microsoft.App/containerApps | Consumption | User-Assigned MI | inc-01 |
+| Web Container App | Microsoft.App/containerApps | Consumption | User-Assigned MI | inc-01 |
+| API Managed Identity | Microsoft.ManagedIdentity/userAssignedIdentities | — | — | inc-01 |
+| Web Managed Identity | Microsoft.ManagedIdentity/userAssignedIdentities | — | — | inc-01 |
+| Azure AI Services | Microsoft.CognitiveServices/accounts (AIServices) | S0 | Managed Identity (RBAC) | inc-01 |
+| gpt-5.4-mini deployment | OpenAI model | GlobalStandard/10 | via AI Services | inc-01 |
+| gpt-image-1.5 deployment | OpenAI model | GlobalStandard/1 | via AI Services | inc-02 |
+| AI Foundry Project | Microsoft.CognitiveServices/accounts/projects | — | — | inc-01 |
+| Container Registry | Microsoft.ContainerRegistry/registries | Basic | Admin user | inc-01 |
+| Log Analytics | Microsoft.OperationalInsights/workspaces | PerGB2018 | — | inc-01 |
+| Application Insights | Microsoft.Insights/components | — | — | inc-01 |
+| Container Apps Environment | Microsoft.App/managedEnvironments | Consumption | — | inc-01 |
+
+### Infrastructure Contracts
+- Full specification: `specs/contracts/infra/resources.yaml`
+- Bicep templates: `infra/main.bicep` + `infra/core/`
+- Deployment: `azd provision` + `azd deploy`
+- ADRs: `specs/adrs/adr-001-azure-openai-over-direct-openai.md`
+
+### Per-Increment Infrastructure Map
+
+| Increment | New Resources | New Env Vars |
+|-----------|--------------|--------------|
+| inc-01 | All base resources + Azure AI Services + gpt-5.4-mini | AZURE_OPENAI_ENDPOINT, AZURE_CLIENT_ID, APPLICATIONINSIGHTS_CONNECTION_STRING, JWT_SECRET |
+| inc-02 | gpt-image-1.5 model deployment | (uses existing endpoint) |
+| inc-03 | (no new infra) | — |
+| inc-04 | (no new infra — reuses gpt-image-1.5 for rejection loop) | — |
+| inc-05 | (no new infra) | — |
+| inc-06 | SQLite (local file, no Azure resource) | DATABASE_PATH |
+| inc-07 | (observability already provisioned in inc-01) | OTEL_EXPORTER_OTLP_ENDPOINT |
+
+### Authentication Model
+
+Azure OpenAI uses **managed identity** (not API keys). `disableLocalAuth: true` on the
+AI Services account enforces RBAC-only access. The API container's user-assigned managed
+identity has `Azure AI Developer` and `Cognitive Services User` roles. See ADR-001.
+
+---
+
 ## Technology Constraints & Notes
 
 1. **Zod v3 vs v4**: Use Zod v3 (`^3.24.2`) — `@langchain/core` depends on Zod v3 for `withStructuredOutput()` schema binding. Zod v4 has breaking API changes that are not yet supported by LangChain.

@@ -14,6 +14,7 @@
     "test:integration": "vitest run tests/integration"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.1",
     "@campaign/shared": "*",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

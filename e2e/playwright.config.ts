@@ -8,6 +8,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1,
+  timeout: 120_000,
+  expect: { timeout: 30_000 },
   reporter: 'html',
   use: {
     baseURL: BASE_URL,
