@@ -14,33 +14,37 @@
   },
   "incrementDelivery": {
     "inc-01": {
-      "status": "in-progress",
-      "currentStep": "tests",
-      "title": "Walking Skeleton: Chat + Planner"
+      "status": "complete",
+      "title": "Walking Skeleton: Chat + Planner",
+      "completedSteps": ["tests", "contracts", "implementation", "verify-and-ship"],
+      "endpoints": {
+        "api": "https://ca-api-umo4sunidpdde.mangopond-1f640088.eastus2.azurecontainerapps.io",
+        "web": "https://ca-web-umo4sunidpdde.mangopond-1f640088.eastus2.azurecontainerapps.io"
+      }
     },
     "inc-02": {
       "status": "pending",
-      "title": "Message Threading & Reactions"
+      "title": "Creative Generation + Image Pipeline"
     },
     "inc-03": {
       "status": "pending",
-      "title": "Document Management"
+      "title": "Copy Review Agent"
     },
     "inc-04": {
       "status": "pending",
-      "title": "Search & Discovery"
+      "title": "Human Approval Gate + Rejection Loop"
     },
     "inc-05": {
       "status": "pending",
-      "title": "Analytics & Insights"
+      "title": "Localization + Completion"
     },
     "inc-06": {
       "status": "pending",
-      "title": "Performance & Scale"
+      "title": "Persistence & Resumption"
     },
     "inc-07": {
       "status": "pending",
-      "title": "Deployment & Hardening"
+      "title": "Full Observability + Error Hardening"
     }
   },
   "brownfieldAnalysis": {
@@ -92,5 +96,5 @@
     "plan-approved": false
   },
   "testsStatus": {},
-  "lastUpdated": "2026-03-30T11:01:00Z"
+  "lastUpdated": "2026-03-30T12:42:00Z"
 }

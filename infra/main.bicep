@@ -106,7 +106,18 @@ module web 'br/public:avm/ptn/azd/container-app-upsert:0.1.1' = {
     identityName: webIdentity.name
     userAssignedIdentityResourceId: webIdentity.outputs.resourceId
     containerMinReplicas: 1
+    targetPort: 3000
     identityPrincipalId: webIdentity.outputs.principalId
+    env: [
+      {
+        name: 'NEXT_PUBLIC_API_URL'
+        value: api.outputs.uri
+      }
+      {
+        name: 'HOSTNAME'
+        value: '0.0.0.0'
+      }
+    ]
   }
 }
 
@@ -139,7 +150,7 @@ module api 'br/public:avm/ptn/azd/container-app-upsert:0.1.1' = {
       }
       {
         name: 'JWT_SECRET'
-        value: uniqueString(resourceGroup().id, resourceToken, 'jwt-secret')
+        value: uniqueString(subscription().id, resourceToken, 'jwt-secret')
       }
     ]
     containerAppsEnvironmentName: containerApps.outputs.environmentName
