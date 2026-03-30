@@ -32,6 +32,15 @@ export class CampaignPage {
   readonly validationMessage: Locator;
   readonly truncationNotification: Locator;
 
+  // Creative generation (inc-02)
+  readonly creativePreview: Locator;
+  readonly generatedImage: Locator;
+  readonly captionText: Locator;
+  readonly hashtagList: Locator;
+  readonly hashtagChips: Locator;
+  readonly statusMessages: Locator;
+  readonly retryButton: Locator;
+
   constructor(page: Page) {
     this.page = page;
 
@@ -53,6 +62,15 @@ export class CampaignPage {
 
     this.validationMessage = page.getByTestId('validation-message');
     this.truncationNotification = page.getByTestId('truncation-notification');
+
+    // Creative generation (inc-02)
+    this.creativePreview = page.getByTestId('creative-preview');
+    this.generatedImage = page.getByTestId('generated-image');
+    this.captionText = page.getByTestId('caption-text');
+    this.hashtagList = page.getByTestId('hashtag-list');
+    this.hashtagChips = page.getByTestId('hashtag-chip');
+    this.statusMessages = page.getByTestId('status-message');
+    this.retryButton = page.getByTestId('retry-button');
   }
 
   async goto(): Promise<void> {
@@ -103,5 +121,25 @@ export class CampaignPage {
 
   async isInputDisabled(): Promise<boolean> {
     return this.chatInput.isDisabled();
+  }
+
+  // --- Creative generation helpers (inc-02) ---
+
+  async waitForCreativePreview(): Promise<void> {
+    await this.creativePreview.waitFor({ state: 'visible', timeout: 90_000 });
+  }
+
+  async getCaption(): Promise<string> {
+    return this.captionText.innerText();
+  }
+
+  async getHashtags(): Promise<string[]> {
+    const chips = await this.hashtagChips.all();
+    return Promise.all(chips.map(c => c.innerText()));
+  }
+
+  async getImageSrc(): Promise<string> {
+    const src = await this.generatedImage.getAttribute('src');
+    return src ?? '';
   }
 }

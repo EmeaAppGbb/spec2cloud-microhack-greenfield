@@ -15,6 +15,34 @@ vi.mock('../../src/services/planner-agent.js', () => ({
   }),
 }));
 
+// Mock the creative generator to avoid real LLM calls
+vi.mock('../../src/services/creative-generator.js', () => ({
+  runCreativeGenerator: vi.fn().mockResolvedValue({
+    imageUrl: '/api/campaign/test-id/image/1',
+    caption: 'Experience the vibrant energy of summer with our exclusive collection — bold styles, unbeatable prices, and endless sunshine vibes await you.',
+    hashtags: ['#SummerSale', '#Fashion', '#Deals', '#Style', '#Trending'],
+    iteration: 1,
+    durationMs: 1200,
+  }),
+}));
+
+// Mock image storage
+vi.mock('../../src/services/image-storage.js', () => ({
+  saveImage: vi.fn().mockResolvedValue({
+    path: '/storage/test-id/1.png',
+    url: '/api/campaign/test-id/image/1',
+  }),
+  getImage: vi.fn().mockImplementation((campaignId: string, version: number) => {
+    if (campaignId === 'existing-campaign' && version === 1) {
+      return Promise.resolve({
+        data: Buffer.from('fake-png-data'),
+        mimeType: 'image/png',
+      });
+    }
+    return Promise.resolve(null);
+  }),
+}));
+
 describe('Campaign Routes', () => {
   const app = createApp();
 
@@ -174,6 +202,55 @@ describe('Campaign Routes', () => {
       expect(res.status).toBe(200);
       expect(res.body.defaultsApplied).toBeDefined();
       expect(typeof res.body.defaultsApplied).toBe('object');
+    });
+  });
+
+  describe('GET /api/campaign/:id/creative — Creative Retrieval', () => {
+    let campaignId: string;
+
+    beforeEach(async () => {
+      const res = await request(app)
+        .post('/api/campaign')
+        .send({ brief: 'Launch a summer marketing campaign for our new product line' });
+      campaignId = res.body.campaignId;
+    });
+
+    it('should return creative assets when available', async () => {
+      const res = await request(app)
+        .get(`/api/campaign/${campaignId}/creative`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.imageUrl).toBeDefined();
+      expect(res.body.caption).toBeDefined();
+      expect(res.body.hashtags).toBeDefined();
+      expect(Array.isArray(res.body.hashtags)).toBe(true);
+    });
+
+    it('should return 404 when no creative exists', async () => {
+      const res = await request(app)
+        .get('/api/campaign/non-existent-id/creative');
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBeDefined();
+    });
+  });
+
+  describe('GET /api/campaign/:id/image/:version — Image Retrieval', () => {
+    it('should return image binary data with correct content-type', async () => {
+      const res = await request(app)
+        .get('/api/campaign/existing-campaign/image/1');
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toMatch(/image\/png/);
+      expect(res.body).toBeDefined();
+    });
+
+    it('should return 404 for non-existent image', async () => {
+      const res = await request(app)
+        .get('/api/campaign/no-such-campaign/image/999');
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBeDefined();
     });
   });
 });

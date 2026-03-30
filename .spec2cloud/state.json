@@ -23,7 +23,8 @@
       }
     },
     "inc-02": {
-      "status": "pending",
+      "status": "in-progress",
+      "currentStep": "tests",
       "title": "Creative Generation + Image Pipeline"
     },
     "inc-03": {
