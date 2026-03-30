@@ -221,3 +221,84 @@ export interface AgentLogEntry {
   errorType?: 'timeout' | 'rate-limit' | 'server-error' | 'unknown';
   attempt?: number;
 }
+
+// ---------------------------------------------------------------------------
+// Rejection scope (used by approval + creative flows)
+// ---------------------------------------------------------------------------
+
+export type RejectionScope = 'regenerate-all' | 'keep-image-redo-text';
+
+// ---------------------------------------------------------------------------
+// Creative generation (inc-02)
+// ---------------------------------------------------------------------------
+
+/** Creative assets produced by Creative Generator */
+export interface CreativeAssets {
+  imageUrl: string;
+  caption: string;
+  hashtags: string[];
+  iterationVersion: number;
+}
+
+/** Single creative iteration record */
+export interface CreativeIteration {
+  version: number;
+  imageUrl: string;
+  caption: string;
+  hashtags: string[];
+  feedback?: string;
+  scope?: RejectionScope;
+  generatedAt: string;
+}
+
+/** Input to Creative Generator */
+export interface CreativeGeneratorInput {
+  plan: CampaignPlan;
+  rejectionFeedback?: string;
+  rejectionScope?: RejectionScope;
+  previousIterations?: CreativeIteration[];
+  currentImageUrl?: string;
+}
+
+/** Creative Generator output */
+export interface CreativeGeneratorOutput {
+  assets: CreativeAssets;
+  imageGenerated: boolean;
+  generationDurationMs: number;
+}
+
+/** Stored image reference */
+export interface StoredImage {
+  campaignId: string;
+  version: number;
+  filename: string;
+  mimeType: 'image/png' | 'image/jpeg';
+  sizeBytes: number;
+  url: string;
+  createdAt: string;
+}
+
+/** Creative generation constraints */
+export const CREATIVE_CONSTRAINTS = {
+  captionMinLength: 100,
+  captionMaxLength: 300,
+  hashtagsMin: 5,
+  hashtagsMax: 10,
+  maxCaptionRepromptAttempts: 2,
+  maxRetryAttempts: 3,
+  retryDelays: [2000, 4000],
+} as const;
+
+/** Status message configuration for image generation */
+export const IMAGE_GEN_STATUS_MESSAGES = {
+  start: '🎨 Generating your campaign image…',
+  progress15s: '⏳ Still working on your image — this can take up to a minute…',
+  progress40s: '🔄 Almost there — putting the finishing touches on your image…',
+  complete: '✅ Image generated!',
+} as const;
+
+/** SSE event for creative-preview structured data */
+export interface CreativePreviewEvent {
+  type: 'creative-preview';
+  data: CreativeAssets;
+}
