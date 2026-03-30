@@ -1,9 +1,7 @@
 import type { NextConfig } from "next";
-import path from 'node:path';
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
-  outputFileTracingRoot: path.join(__dirname, '../../'),
+  output: process.env.NEXT_OUTPUT_STANDALONE === '1' ? 'standalone' : undefined,
   transpilePackages: ['@campaign/shared'],
   async rewrites() {
     return [

@@ -53,3 +53,5 @@ apphost.settings.json
 *.pfx
 *.crt
 *.p12
+core.*
+src/api/data/

@@ -3,6 +3,8 @@ import type { CampaignPlan } from '../models/campaign.js';
 import { validateBrief } from '../services/brief-validation.js';
 import { validatePlan, applyDefaults } from '../services/plan-validation.js';
 import { runPlanner } from '../services/planner-agent.js';
+import { runCreativeGenerator } from '../services/creative-generator.js';
+import { getImage } from '../services/image-storage.js';
 import { CampaignStore } from '../store/campaign-store.js';
 import { logger } from '../logger.js';
 
@@ -38,6 +40,30 @@ export function mapCampaignEndpoints(app: Express): void {
         const validated = validatePlan(defaultedPlan);
         if (validated.plan) {
           store.updatePlan(id, validated.plan);
+
+          // Auto-trigger creative generation after planning
+          try {
+            const creativeResult = await runCreativeGenerator({
+              campaignId: id,
+              plan: validated.plan,
+              iteration: 1,
+            });
+
+            store.updateCreative(id, {
+              imageUrl: creativeResult.imageUrl,
+              caption: creativeResult.caption,
+              hashtags: creativeResult.hashtags,
+              iterationVersion: creativeResult.iteration,
+            }, [{
+              version: creativeResult.iteration,
+              imageUrl: creativeResult.imageUrl,
+              caption: creativeResult.caption,
+              hashtags: creativeResult.hashtags,
+              generatedAt: new Date().toISOString(),
+            }]);
+          } catch (err) {
+            logger.error({ campaignId: id, err }, 'Creative generator failed');
+          }
         }
       } catch (err) {
         logger.error({ campaignId: id, err }, 'Planner agent failed');
@@ -81,6 +107,40 @@ export function mapCampaignEndpoints(app: Express): void {
     });
   });
 
+  // Creative retrieval endpoint
+  app.get('/api/campaign/:campaignId/creative', (req, res) => {
+    const { campaignId } = req.params;
+    const campaign = store.get(campaignId);
+
+    if (!campaign || !campaign.creative) {
+      res.status(404).json({ error: 'Creative not found' });
+      return;
+    }
+
+    res.json(campaign.creative);
+  });
+
+  // Image serving endpoint
+  app.get('/api/campaign/:campaignId/image/:version', async (req, res) => {
+    const { campaignId, version } = req.params;
+    const versionNum = parseInt(version, 10);
+
+    try {
+      const image = await getImage(campaignId, versionNum);
+
+      if (!image) {
+        res.status(404).json({ error: 'Image not found' });
+        return;
+      }
+
+      res.set('Content-Type', image.mimeType);
+      res.send(image.data);
+    } catch (err) {
+      logger.error({ campaignId, version, err }, 'Error serving image');
+      res.status(500).json({ error: 'Failed to retrieve image' });
+    }
+  });
+
   // SSE streaming endpoint — delivers campaign events to frontend
   app.get('/api/campaign/:campaignId/stream', (req, res) => {
     const { campaignId } = req.params;
@@ -97,10 +157,12 @@ export function mapCampaignEndpoints(app: Express): void {
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
       'Access-Control-Allow-Origin': '*',
+      'X-Accel-Buffering': 'no',
     });
 
     const sendEvent = (event: string, data: unknown) => {
       res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+      if (typeof (res as any).flush === 'function') (res as any).flush();
     };
 
     // Stage: planning → active
@@ -126,8 +188,27 @@ export function mapCampaignEndpoints(app: Express): void {
           // Stage: planning → completed
           sendEvent('stage-transition', { stage: 'planning', status: 'completed' });
 
-          // Agent complete with handoff
+          // Planner complete with handoff to creative
           sendEvent('complete', { agentId: 'planner', nextAgent: 'creative-generator' });
+
+          // Stage: generating → active
+          sendEvent('stage-transition', { stage: 'generating', status: 'active' });
+
+          // Status message for creative generation
+          sendEvent('status', { message: '🎨 Generating your campaign image…', agentId: 'creative-generator' });
+
+          if (campaign.creative) {
+            // Send creative preview
+            sendEvent('structured', { type: 'creative-preview', data: campaign.creative });
+
+            // Stage: generating → completed
+            sendEvent('stage-transition', { stage: 'generating', status: 'completed' });
+
+            // Creative complete with handoff
+            sendEvent('complete', { agentId: 'creative-generator', nextAgent: 'copy-reviewer' });
+          } else {
+            sendEvent('complete', { agentId: 'creative-generator' });
+          }
 
           res.end();
         }

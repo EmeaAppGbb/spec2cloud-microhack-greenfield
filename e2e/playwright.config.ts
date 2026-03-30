@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3002';
+
 export default defineConfig({
   testDir: '.',
   fullyParallel: false,
@@ -8,7 +10,7 @@ export default defineConfig({
   workers: 1,
   reporter: 'html',
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3001',
+    baseURL: BASE_URL,
     trace: 'on-first-retry',
     screenshot: 'on',
     video: 'retain-on-failure',
@@ -19,12 +21,22 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
-    command: 'aspire start --nologo && aspire wait web --status healthy --timeout 90 --nologo',
-    url: 'http://localhost:3001',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : [
+    {
+      command: 'npx tsx src/index.ts',
+      url: 'http://localhost:5001/health',
+      reuseExistingServer: true,
+      timeout: 30000,
+      env: { PORT: '5001' },
+      cwd: '../src/api',
+    },
+    {
+      command: 'npx next build && cp -r public .next/standalone/src/web/public; cp -r .next/static .next/standalone/src/web/.next/static; node .next/standalone/src/web/server.js',
+      url: 'http://localhost:3002',
+      reuseExistingServer: true,
+      timeout: 120000,
+      env: { PORT: '3002', HOSTNAME: '0.0.0.0', NEXT_PUBLIC_API_URL: 'http://localhost:5001' },
+      cwd: '../src/web',
+    },
+  ],
 });

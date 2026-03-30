@@ -1,8 +1,10 @@
 'use client';
 
 import Markdown from 'react-markdown';
-import type { ChatMessage as ChatMessageType } from '@campaign/shared';
+import type { ChatMessage as ChatMessageType, CreativeAssets } from '@campaign/shared';
 import PlanBlock from './PlanBlock';
+import CreativePreview from './CreativePreview';
+import StatusMessage from './StatusMessage';
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -11,9 +13,22 @@ interface ChatMessageProps {
 export default function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === 'user';
   const isPlan = message.metadata?.messageType === 'plan';
+  const isCreativePreview = message.metadata?.messageType === 'creative-preview';
+  const isStatus = message.metadata?.messageType === 'status';
   const isError = message.metadata?.messageType === 'error';
 
   const testId = isUser ? 'user-message' : 'assistant-message';
+
+  // Status messages get lightweight treatment — no bubble wrapper
+  if (isStatus && message.content) {
+    return (
+      <div data-testid={testId} className="flex justify-start mb-3">
+        <div className="max-w-[80%]">
+          <StatusMessage message={message.content} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -31,6 +46,10 @@ export default function ChatMessage({ message }: ChatMessageProps) {
       >
         {isPlan && message.metadata?.structuredData ? (
           <PlanBlock data={message.metadata.structuredData as Record<string, unknown>} />
+        ) : isCreativePreview && message.metadata?.structuredData ? (
+          <CreativePreview
+            {...(message.metadata.structuredData as CreativeAssets)}
+          />
         ) : message.content ? (
           <Markdown
             components={{

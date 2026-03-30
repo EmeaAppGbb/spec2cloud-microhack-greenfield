@@ -27,7 +27,8 @@ export function useSSE(campaignId: string | null): void {
       eventSourceRef.current.close();
     }
 
-    const es = new EventSource(`/api/campaign/${campaignId}/stream`);
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+    const es = new EventSource(`${apiBase}/api/campaign/${campaignId}/stream`);
     eventSourceRef.current = es;
 
     // --- token: append to streaming assistant message ----------------------
@@ -42,7 +43,7 @@ export function useSSE(campaignId: string | null): void {
       } catch { /* ignore parse errors */ }
     }) as EventListener);
 
-    // --- structured: deliver plan block or other structured data -----------
+    // --- structured: deliver plan block, creative preview, or other data ---
     es.addEventListener('structured', ((e: Event) => {
       const me = e as MessageEvent;
       try {
@@ -60,6 +61,19 @@ export function useSSE(campaignId: string | null): void {
             },
           };
           dispatch({ type: 'ADD_MESSAGE', payload: planMsg });
+        } else if (data.type === 'creative-preview' && data.data) {
+          const creativeMsg: ChatMessage = {
+            id: generateMessageId(),
+            role: 'assistant',
+            content: '',
+            timestamp: new Date().toISOString(),
+            metadata: {
+              messageType: 'creative-preview',
+              structuredData: data.data,
+              agentName: 'creative-generator',
+            },
+          };
+          dispatch({ type: 'ADD_MESSAGE', payload: creativeMsg });
         }
       } catch { /* ignore parse errors */ }
     }) as EventListener);
@@ -96,7 +110,7 @@ export function useSSE(campaignId: string | null): void {
       } catch { /* ignore parse errors */ }
     }) as EventListener);
 
-    // --- complete: agent finished, optional handoff -----------------------
+     // --- complete: agent finished, optional handoff -----------------------
     es.addEventListener('complete', ((e: Event) => {
       const me = e as MessageEvent;
       try {
@@ -131,6 +145,9 @@ export function useSSE(campaignId: string | null): void {
 
         if (!data.nextAgent) {
           dispatch({ type: 'SET_PROCESSING', payload: false });
+          // Close SSE — pipeline complete, prevent auto-reconnect
+          es.close();
+          eventSourceRef.current = null;
         }
       } catch { /* ignore parse errors */ }
     }) as EventListener);
@@ -152,10 +169,10 @@ export function useSSE(campaignId: string | null): void {
         } catch { /* ignore parse errors */ }
       }
 
-      // If EventSource is permanently closed, stop processing
-      if (es.readyState === EventSource.CLOSED) {
-        dispatch({ type: 'SET_PROCESSING', payload: false });
-      }
+      // Prevent auto-reconnect — close EventSource on any error/disconnect
+      es.close();
+      eventSourceRef.current = null;
+      dispatch({ type: 'SET_PROCESSING', payload: false });
     }) as EventListener);
 
     return () => {

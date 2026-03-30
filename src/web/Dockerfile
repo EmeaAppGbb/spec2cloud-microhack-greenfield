@@ -16,7 +16,7 @@ COPY --from=deps /app/src/shared ./src/shared
 COPY --from=deps /app/src/web/node_modules ./src/web/node_modules
 COPY package.json ./
 COPY src/web/ ./src/web/
-RUN npm run build -w src/web
+RUN NEXT_OUTPUT_STANDALONE=1 npm run build -w src/web
 
 # Production
 FROM base AS runner
