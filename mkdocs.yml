@@ -37,5 +37,12 @@ markdown_extensions:
 plugins:
   - search
 
-# Navigation is auto-generated — see docs/nav.yml for the generated structure.
-# Copy the contents of docs/nav.yml here after running `npm run docs:generate`.
+nav:
+  - Home: index.md
+  - Features:
+    - "Campaign Planning Agent": features/campaign-planning-agent.md
+    - "Campaign Timeline — Stage Progression Visualization": features/campaign-timeline-stage-progression-visualization.md
+    - "Chat Interface — Split Panel with Streaming": features/chat-interface-split-panel-with-streaming.md
+    - "Creative Generation — AI Image, Caption & Hashtag Pipeline": features/creative-generation-ai-image-caption-hashtag-pipeline.md
+    - "Data Persistence — Planning Stage": features/data-persistence-planning-stage.md
+    - "Observability — Structured Logging for Planner Agent": features/observability-structured-logging-for-planner-agent.md

@@ -1,6 +1,1 @@
-import { beforeEach } from 'vitest';
-import { clearUsers } from '../src/models/user-store.js';
-
-beforeEach(() => {
-  clearUsers();
-});
+// Test setup — populated during spec2cloud Phase 2

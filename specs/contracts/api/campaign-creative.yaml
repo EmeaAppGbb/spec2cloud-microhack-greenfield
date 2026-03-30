@@ -1,0 +1,258 @@
+openapi: 3.1.0
+info:
+  title: AI Marketing Campaign Assistant — Creative Generation API
+  description: >
+    Increment 2 (Creative Generation + Image Pipeline) API contract.
+    Covers creative asset retrieval, image serving, and real-time SSE
+    streaming events for the Creative Generator agent.
+  version: 0.1.0
+  contact:
+    name: spec2cloud
+
+servers:
+  - url: http://localhost:5001
+    description: Local development (Aspire)
+
+paths:
+  /api/campaign/{campaignId}/creative:
+    get:
+      operationId: getCampaignCreative
+      summary: Retrieve creative assets and iteration history
+      description: >
+        Returns the latest CreativeAssets produced by the Creative Generator
+        agent, along with the full iteration history for this campaign.
+        Available once the creative-generator agent has completed at least
+        one iteration.
+      tags: [Creative]
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+      responses:
+        '200':
+          description: Creative assets and iteration history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCreativeResponse'
+        '404':
+          description: Campaign not found or no creative assets yet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/campaign/{campaignId}/image/{version}:
+    get:
+      operationId: getCampaignImage
+      summary: Serve a generated campaign image binary
+      description: >
+        Returns the raw image binary for the specified iteration version.
+        The Content-Type header reflects the stored MIME type (image/png
+        or image/jpeg).
+      tags: [Creative]
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Creative iteration version number
+      responses:
+        '200':
+          description: Image binary
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Image not found for given campaign and version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/campaign/{campaignId}/stream:
+    get:
+      operationId: streamCreativeEvents
+      summary: SSE stream — creative generation events (extends inc-01 stream)
+      description: >
+        The existing SSE stream (defined in campaign-planning.yaml) carries
+        additional event types during creative generation. This section
+        documents the creative-specific events emitted on the same
+        `/stream` endpoint.
+
+        **Creative-specific SSE events:**
+
+        | event            | data schema              | description                                     |
+        |------------------|--------------------------|-------------------------------------------------|
+        | status           | SSEStatusEvent           | Image generation progress messages               |
+        | structured       | CreativePreviewEvent     | Creative assets preview (type: creative-preview) |
+        | stage-transition | SSEStageTransitionEvent  | Transition to/from `generating` stage            |
+        | complete         | SSECompleteEvent         | Creative agent done; nextAgent: copy-reviewer    |
+
+        **Status message sequence during image generation:**
+
+        1. `🎨 Generating your campaign image…` — emitted at start
+        2. `⏳ Still working on your image — this can take up to a minute…` — after ~15 s
+        3. `🔄 Almost there — putting the finishing touches on your image…` — after ~40 s
+        4. `✅ Image generated!` — on completion
+
+        **Stage transitions:**
+
+        - `{ stage: 'generating', status: 'active' }` — when creative agent starts
+        - `{ stage: 'generating', status: 'completed' }` — when creative agent finishes
+
+        **Complete event:**
+
+        - `{ agentId: 'creative-generator', nextAgent: 'copy-reviewer' }`
+      tags: [Creative]
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+      responses:
+        '200':
+          description: SSE stream opened (creative events interleaved)
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: >
+                  Newline-delimited SSE frames. Each frame has
+                  `event: <type>` and `data: <JSON>` lines.
+        '404':
+          description: Campaign not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+components:
+  parameters:
+    CampaignId:
+      name: campaignId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique campaign identifier
+
+  schemas:
+    # ---- Request / Response ----
+
+    GetCreativeResponse:
+      type: object
+      required: [assets, history]
+      properties:
+        assets:
+          $ref: '#/components/schemas/CreativeAssets'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreativeIteration'
+
+    # ---- Domain Models ----
+
+    CreativeAssets:
+      type: object
+      required: [imageUrl, caption, hashtags, iterationVersion]
+      properties:
+        imageUrl:
+          type: string
+          format: uri
+        caption:
+          type: string
+          minLength: 100
+          maxLength: 300
+        hashtags:
+          type: array
+          items:
+            type: string
+          minItems: 5
+          maxItems: 10
+        iterationVersion:
+          type: integer
+          minimum: 1
+
+    CreativeIteration:
+      type: object
+      required: [version, imageUrl, caption, hashtags, generatedAt]
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        imageUrl:
+          type: string
+          format: uri
+        caption:
+          type: string
+        hashtags:
+          type: array
+          items:
+            type: string
+        feedback:
+          type: string
+        scope:
+          $ref: '#/components/schemas/RejectionScope'
+        generatedAt:
+          type: string
+          format: date-time
+
+    StoredImage:
+      type: object
+      required: [campaignId, version, filename, mimeType, sizeBytes, url, createdAt]
+      properties:
+        campaignId:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 1
+        filename:
+          type: string
+        mimeType:
+          type: string
+          enum: [image/png, image/jpeg]
+        sizeBytes:
+          type: integer
+          minimum: 0
+        url:
+          type: string
+          format: uri
+        createdAt:
+          type: string
+          format: date-time
+
+    RejectionScope:
+      type: string
+      enum:
+        - regenerate-all
+        - keep-image-redo-text
+
+    # ---- SSE Event Payloads (creative-specific) ----
+
+    CreativePreviewEvent:
+      type: object
+      required: [type, data]
+      properties:
+        type:
+          type: string
+          const: creative-preview
+        data:
+          $ref: '#/components/schemas/CreativeAssets'
+
+    # ---- Common (shared with campaign-planning.yaml) ----
+
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        details:
+          type: string

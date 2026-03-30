@@ -1,0 +1,294 @@
+openapi: 3.1.0
+info:
+  title: AI Marketing Campaign Assistant — Campaign Planning API
+  description: >
+    Increment 1 (Walking Skeleton) API contract. Covers campaign creation,
+    plan retrieval, and real-time SSE streaming for the Campaign Planner agent.
+  version: 0.1.0
+  contact:
+    name: spec2cloud
+
+servers:
+  - url: http://localhost:5001
+    description: Local development (Aspire)
+
+paths:
+  /api/campaign:
+    post:
+      operationId: createCampaign
+      summary: Create a new campaign from a marketing brief
+      description: >
+        Accepts a marketing brief, validates length constraints, creates a
+        CampaignRecord, and triggers the Campaign Planner agent. Returns
+        the new campaign ID. If the brief exceeds BRIEF_MAX_LENGTH it is
+        silently truncated and `truncated: true` is returned.
+      tags: [Campaign]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCampaignRequest'
+      responses:
+        '201':
+          description: Campaign created — planner agent started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCampaignResponse'
+        '400':
+          description: Brief too short or missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BriefValidationError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/campaign/{campaignId}/plan:
+    get:
+      operationId: getCampaignPlan
+      summary: Retrieve the generated campaign plan
+      description: >
+        Returns the CampaignPlan once the planner agent has completed.
+        Includes metadata about which fields received smart defaults.
+      tags: [Campaign]
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+      responses:
+        '200':
+          description: Plan available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPlanResponse'
+        '404':
+          description: Campaign not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Plan not yet available — planner still running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/campaign/{campaignId}/stream:
+    get:
+      operationId: streamCampaignEvents
+      summary: SSE stream for real-time campaign events
+      description: >
+        Opens a Server-Sent Events connection that streams planner agent
+        tokens, structured data, status updates, errors, and stage
+        transitions in real time.
+
+        **Event types:**
+
+        | event        | data schema              | description                          |
+        |--------------|--------------------------|--------------------------------------|
+        | token        | SSETokenEvent            | Incremental text token from LLM      |
+        | structured   | SSEStructuredEvent       | Structured JSON payload (e.g. plan)  |
+        | status       | SSEStatusEvent           | Human-readable status message        |
+        | error        | SSEErrorEvent            | Error with retryable flag            |
+        | complete     | SSECompleteEvent         | Agent finished; optional next agent  |
+        | stage-transition | SSEStageTransitionEvent | Workflow stage changed           |
+
+        The connection closes after a `complete` event with no `nextAgent`,
+        or when the client disconnects.
+      tags: [Campaign]
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+      responses:
+        '200':
+          description: SSE stream opened
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: >
+                  Newline-delimited SSE frames. Each frame has
+                  `event: <type>` and `data: <JSON>` lines.
+        '404':
+          description: Campaign not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+components:
+  parameters:
+    CampaignId:
+      name: campaignId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique campaign identifier
+
+  schemas:
+    # ---- Request / Response ----
+
+    CreateCampaignRequest:
+      type: object
+      required: [brief]
+      properties:
+        brief:
+          type: string
+          minLength: 10
+          maxLength: 2000
+          description: Marketing brief describing the campaign goals
+
+    CreateCampaignResponse:
+      type: object
+      required: [campaignId, truncated]
+      properties:
+        campaignId:
+          type: string
+          format: uuid
+        truncated:
+          type: boolean
+          description: True if the brief was truncated to BRIEF_MAX_LENGTH
+
+    BriefValidationError:
+      type: object
+      required: [error, minLength, actualLength]
+      properties:
+        error:
+          type: string
+        minLength:
+          type: integer
+        actualLength:
+          type: integer
+
+    GetPlanResponse:
+      type: object
+      required: [plan, defaultsApplied]
+      properties:
+        plan:
+          $ref: '#/components/schemas/CampaignPlan'
+        defaultsApplied:
+          type: object
+          required: [platform, targetAudience, tone]
+          properties:
+            platform:
+              type: boolean
+            targetAudience:
+              type: boolean
+            tone:
+              type: boolean
+
+    # ---- Domain Models ----
+
+    CampaignPlan:
+      type: object
+      required:
+        - campaignName
+        - objective
+        - targetAudience
+        - keyMessages
+        - visualDirection
+        - tone
+        - platform
+      properties:
+        campaignName:
+          type: string
+        objective:
+          type: string
+        targetAudience:
+          type: string
+        keyMessages:
+          type: array
+          items:
+            type: string
+        visualDirection:
+          type: string
+        tone:
+          type: string
+        platform:
+          type: string
+
+    # ---- SSE Event Payloads ----
+
+    SSETokenEvent:
+      type: object
+      required: [token, agentId]
+      properties:
+        token:
+          type: string
+        agentId:
+          type: string
+
+    SSEStructuredEvent:
+      type: object
+      required: [type, data]
+      properties:
+        type:
+          type: string
+        data: {}
+
+    SSEStatusEvent:
+      type: object
+      required: [message, agentId]
+      properties:
+        message:
+          type: string
+        agentId:
+          type: string
+
+    SSEErrorEvent:
+      type: object
+      required: [message, agentId, retryable]
+      properties:
+        message:
+          type: string
+        agentId:
+          type: string
+        retryable:
+          type: boolean
+
+    SSECompleteEvent:
+      type: object
+      required: [agentId]
+      properties:
+        agentId:
+          type: string
+        nextAgent:
+          type: string
+
+    SSEStageTransitionEvent:
+      type: object
+      required: [stage, status, timestamp]
+      properties:
+        stage:
+          type: string
+          enum:
+            - planning
+            - generating
+            - reviewing
+            - awaiting-approval
+            - localizing
+            - complete
+        status:
+          type: string
+          enum: [pending, active, completed]
+        timestamp:
+          type: string
+          format: date-time
+
+    # ---- Common ----
+
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        details:
+          type: string

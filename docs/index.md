@@ -1,14 +1,18 @@
 # Application User Manual
 
-This documentation is auto-generated from Gherkin feature specifications
-and Playwright test screenshots. Each page shows a feature as a visual
-step-by-step walkthrough — the living specification of how the application works.
+This documentation is auto-generated from Gherkin feature specifications,
+Playwright test screenshots, and UI/UX wireframe prototypes. Each feature page
+shows the approved wireframe design alongside the living specification of how
+the application works.
 
 ## Features
 
-- [**Authentication**](features/authentication.md) — 20 scenarios @auth
-- [**Profile page, navigation bar, and landing page**](features/profile-page-navigation-bar-and-landing-page.md) — 17 scenarios @profile
-- [**Role-Based Access Control (RBAC)**](features/role-based-access-control-rbac.md) — 12 scenarios @rbac @admin @roles @authorization
+- [**Campaign Planning Agent**](features/campaign-planning-agent.md) — 25 scenarios @inc-01
+- [**Campaign Timeline — Stage Progression Visualization**](features/campaign-timeline-stage-progression-visualization.md) — 10 scenarios @inc-01
+- [**Chat Interface — Split Panel with Streaming**](features/chat-interface-split-panel-with-streaming.md) — 11 scenarios @inc-01
+- [**Creative Generation — AI Image, Caption & Hashtag Pipeline**](features/creative-generation-ai-image-caption-hashtag-pipeline.md) — 27 scenarios @inc-02
+- [**Data Persistence — Planning Stage**](features/data-persistence-planning-stage.md) — 4 scenarios @inc-01
+- [**Observability — Structured Logging for Planner Agent**](features/observability-structured-logging-for-planner-agent.md) — 9 scenarios @inc-01
 
 ---
 

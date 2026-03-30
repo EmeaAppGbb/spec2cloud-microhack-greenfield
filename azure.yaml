@@ -10,10 +10,14 @@ services:
     project: ./src/api
     host: containerapp
     language: ts
+    docker:
+      context: ../../
   web:
     project: ./src/web
     host: containerapp
     language: ts
+    docker:
+      context: ../../
 resources:
   api:
     type: host.containerapp

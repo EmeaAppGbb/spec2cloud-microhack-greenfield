@@ -7,19 +7,23 @@ var builder = DistributedApplication.CreateBuilder(args);
 // API — Express.js / TypeScript backend
 var api = builder.AddJavaScriptApp("api", "./src/api")
     .WithEnvironment("JWT_SECRET", "aspire-local-dev-jwt-secret")
+    .WithEnvironment("AZURE_OPENAI_ENDPOINT", builder.Configuration["AZURE_OPENAI_ENDPOINT"] ?? "")
+    .WithEnvironment("AZURE_OPENAI_API_KEY", builder.Configuration["AZURE_OPENAI_API_KEY"] ?? "")
     .WithHttpEndpoint(port: 5001, env: "PORT")
     .WithHttpHealthCheck("/health");
 
 // Web — Next.js frontend
 builder.AddJavaScriptApp("web", "./src/web")
+    .WithHttpEndpoint(port: 3001, env: "PORT")
     .WithExternalHttpEndpoints()
     .WithReference(api)
     .WaitFor(api);
 
 // Docs — MkDocs documentation server
+// mkdocs binds to internal port 8201; Aspire proxies 8200 → 8201
 builder.AddPythonExecutable("docs", ".", "mkdocs")
-    .WithArgs("serve", "--dev-addr", "0.0.0.0:8000")
-    .WithHttpEndpoint(port: 8000)
+    .WithArgs("serve", "--dev-addr", "0.0.0.0:8201")
+    .WithHttpEndpoint(port: 8200, targetPort: 8201)
     .WithExternalHttpEndpoints();
 
 builder.Build().Run();

@@ -1,15 +1,28 @@
-import { test as base } from '@playwright/test';
+import { test as base, expect } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// Extended test fixture that resets the in-memory user store before each test
+function slugify(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
 export const test = base.extend({
-  page: async ({ page }, use) => {
-    // Reset the user store before each test for isolation
-    const apiUrl = process.env.PLAYWRIGHT_BASE_URL
-      ? new URL(process.env.PLAYWRIGHT_BASE_URL).origin.replace(':3000', ':5001')
-      : 'http://localhost:5001';
-    await page.request.post(`${apiUrl}/api/test/reset`);
+  page: async ({ page }, use, testInfo) => {
     await use(page);
+
+    // After test, capture final screenshot for docs
+    if (process.env.GENERATE_SCREENSHOTS === 'true' || testInfo.status === 'passed') {
+      const docsDir = path.resolve(process.cwd(), 'docs', 'screenshots');
+      const suiteName = slugify(testInfo.titlePath[1] || 'unknown');
+      const testName = slugify(testInfo.title);
+      const dir = path.join(docsDir, suiteName, testName);
+      fs.mkdirSync(dir, { recursive: true });
+
+      const screenshot = await page.screenshot({ fullPage: true });
+      const status = testInfo.status === 'passed' ? 'passed' : 'failed';
+      fs.writeFileSync(path.join(dir, `999-${status}.png`), screenshot);
+    }
   },
 });
 
-export { expect } from '@playwright/test';
+export { expect };

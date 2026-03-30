@@ -1,81 +1,86 @@
 'use client';
 
-import React, { useState, useRef, useCallback, KeyboardEvent } from 'react';
+import { useState, useCallback } from 'react';
+import { useCampaign } from '../context/CampaignContext';
 
-interface ChatInputProps {
-  onSend: (message: string) => void;
-  disabled: boolean;
-}
+export default function ChatInput() {
+  const { state, submitBrief } = useCampaign();
+  const [inputValue, setInputValue] = useState('');
 
-export default function ChatInput({ onSend, disabled }: ChatInputProps) {
-  const [value, setValue] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isButtonDisabled = inputValue.trim().length === 0 || state.isProcessing;
 
-  const isEmpty = value.trim().length === 0;
+  const handleSubmit = useCallback(async () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
 
-  const handleSend = useCallback(() => {
-    if (isEmpty || disabled) return;
-    onSend(value);
-    setValue('');
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+    const accepted = await submitBrief(inputValue);
+    if (accepted) {
+      setInputValue('');
     }
-  }, [value, isEmpty, disabled, onSend]);
+  }, [inputValue, submitBrief]);
 
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        handleSend();
+        if (inputValue.trim()) {
+          handleSubmit();
+        }
       }
     },
-    [handleSend]
+    [inputValue, handleSubmit],
   );
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setValue(e.target.value);
-    // Auto-resize
-    const ta = e.target;
-    ta.style.height = 'auto';
-    ta.style.height = `${Math.min(ta.scrollHeight, 150)}px`;
-  };
-
   return (
-    <div className="flex items-end gap-2 p-4 border-t border-gray-200 bg-white">
-      <textarea
-        ref={textareaRef}
-        role="textbox"
-        aria-label="Message"
-        tabIndex={1}
-        value={value}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        disabled={disabled}
-        placeholder="Type a message..."
-        rows={1}
-        className="flex-1 resize-none rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-      />
-      <button
-        type="button"
-        onClick={handleSend}
-        aria-label="Send"
-        tabIndex={2}
-        aria-disabled={disabled || isEmpty}
-        className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-          disabled || isEmpty
-            ? 'bg-gray-300 cursor-not-allowed text-white'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
-        }`}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          className="h-5 w-5"
+    <div className="border-t border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
+      {/* Validation message */}
+      {state.validationError && (
+        <div
+          data-testid="validation-message"
+          className="mb-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800"
+          role="alert"
         >
-          <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
-        </svg>
-      </button>
+          {state.validationError}
+        </div>
+      )}
+
+      {/* Truncation notification */}
+      {state.truncationNotice && (
+        <div
+          data-testid="truncation-notification"
+          className="mb-2 rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-800 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800"
+          role="status"
+        >
+          {state.truncationNotice}
+        </div>
+      )}
+
+      <div className="flex items-end gap-2">
+        <textarea
+          data-testid="chat-input"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={state.isProcessing}
+          placeholder="Describe your campaign idea…"
+          rows={2}
+          className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm
+                     placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+                     focus:outline-none disabled:cursor-not-allowed disabled:opacity-50
+                     dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
+        />
+        <button
+          data-testid="send-button"
+          onClick={handleSubmit}
+          disabled={isButtonDisabled}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white
+                     hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
+                     focus:outline-none disabled:cursor-not-allowed disabled:opacity-50
+                     dark:focus:ring-offset-gray-900"
+        >
+          Send
+        </button>
+      </div>
     </div>
   );
 }

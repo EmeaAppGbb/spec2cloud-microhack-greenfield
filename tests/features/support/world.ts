@@ -19,8 +19,6 @@ export class CustomWorld extends World {
   cookies: string[] = [];
   apiBaseUrl = 'http://localhost:5001';
   webBaseUrl = 'http://localhost:3000';
-  storedPasswords: Record<string, string> = {};
-  tamperedJwt: string | null = null;
 
   async apiRequest(method: string, path: string, body?: object): Promise<void> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
