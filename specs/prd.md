@@ -287,7 +287,7 @@ A single user interacting with the chat interface to create a marketing campaign
 - One image per campaign — no galleries or multi-asset generation.
 
 ### Assumptions
-- An AI image generation service (e.g., DALL-E) is available and configured.
+- An AI image generation service (gpt-image-1) is available and configured.
 - An LLM service (e.g., GPT-4) is available for all text-generation agents (planning, copy review, localization).
 - The application runs in a single-user context — no concurrent campaign creation.
 - Network connectivity to AI services is generally reliable; the system retries transient AI failures up to 3 times before surfacing an error.

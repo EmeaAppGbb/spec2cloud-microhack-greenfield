@@ -43,7 +43,7 @@ It also indirectly supports:
      - `toStatus` (new workflow status)
      - `trigger` (what caused the transition, e.g., `agent-complete`, `user-approval`, `user-rejection`)
   4. AI service call logs include:
-     - `aiService` (e.g., `openai-chat`, `openai-dalle`)
+     - `aiService` (e.g., `openai-chat`, `openai-image`)
      - `model` (model identifier)
      - `attempt` (attempt number, 1-based, for retry tracking)
      - `durationMs` (call duration)
@@ -258,7 +258,7 @@ interface WorkflowTransitionLogEntry extends LogEntry {
 
 /** AI service call log entry */
 interface AiCallLogEntry extends LogEntry {
-  aiService: string; // e.g., 'openai-chat', 'openai-dalle'
+  aiService: string; // e.g., 'openai-chat', 'openai-image'
   model: string;
   attempt: number;
   durationMs: number;

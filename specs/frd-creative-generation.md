@@ -48,7 +48,7 @@ This FRD covers the following user stories from the PRD:
      - The `visualDirection` field as the primary creative direction.
      - The `campaignName` and `objective` for contextual alignment.
      - The `platform` to optimize aspect ratio (e.g., 1:1 for Instagram).
-  2. The prompt is sent to an AI image generation service (e.g., DALL-E).
+  2. The prompt is sent to an AI image generation service (gpt-image-1).
   3. Image generation may take up to 60 seconds.
   4. During generation, status messages are emitted to the chat (see FR-5).
   5. The returned image is binary image data (PNG or JPEG).
@@ -382,7 +382,7 @@ interface StoredImage {
 - **`chat-interface`**: Displays status messages, streams text output, and renders the creative preview. The approval gate UI handles the rejection interaction.
 - **`copy-review`**: The downstream agent that receives creative assets via auto-handoff.
 - **`human-approval`**: The approval gate that may trigger rejection-regeneration loops.
-- **AI image generation service**: An external service (e.g., DALL-E) must be configured for real image generation.
+- **AI image generation service**: OpenAI gpt-image-1 must be configured for real image generation.
 - **LLM service**: An external LLM (e.g., GPT-4) must be available for caption and hashtag generation.
 - **`data-persistence`**: Creative assets and iteration history must be persisted. Images must be stored and served.
 - **`campaign-timeline`**: The timeline must reflect the "Generating" stage.

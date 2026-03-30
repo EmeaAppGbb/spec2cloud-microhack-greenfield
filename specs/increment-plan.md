@@ -80,7 +80,7 @@ This plan delivers the AI Marketing Campaign Assistant in 7 increments, building
   6. Image saved to storage, URL persisted. Creative data persisted.
   7. System signals readiness for next agent (Copy Reviewer placeholder).
 - **Dependencies**: `inc-01` — requires chat interface, planner output, timeline, persistence foundation.
-- **Complexity**: L — AI image generation API integration (DALL-E), image storage/serving pipeline, status message timing, caption/hashtag constraint enforcement, introduction of distributed tracing.
+- **Complexity**: L — AI image generation API integration (gpt-image-1), image storage/serving pipeline, status message timing, caption/hashtag constraint enforcement, introduction of distributed tracing.
 - **Definition of Done**:
   - Planner completion auto-triggers Creative Generator.
   - A real AI-generated image is produced (not placeholder).
