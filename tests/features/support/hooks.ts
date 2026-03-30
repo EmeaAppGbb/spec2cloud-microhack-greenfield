@@ -66,11 +66,6 @@ BeforeAll(async function () {
 });
 
 Before(async function (this: CustomWorld, { pickle, gherkinDocument }) {
-  // Reset stores for test isolation
-  try {
-    await fetch(`${API_URL}/api/test/reset`, { method: 'POST' });
-  } catch { /* server may not be ready yet */ }
-
   this.featureName = gherkinDocument?.feature?.name || 'unknown-feature';
   this.scenarioName = pickle.name || 'unknown-scenario';
   this.stepIndex = 0;

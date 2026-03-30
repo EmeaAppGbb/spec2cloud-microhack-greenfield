@@ -1,22 +1,44 @@
 {
-  "mode": "pending",
-  "currentPhase": "setup",
+  "mode": "greenfield",
+  "currentPhase": "product-discovery",
   "productDiscovery": {
-    "specRefinement": { "status": "pending" },
-    "uiuxDesign": { "status": "pending" },
-    "incrementPlanning": { "status": "pending" }
+    "specRefinement": {
+      "status": "in-progress"
+    },
+    "uiuxDesign": {
+      "status": "pending"
+    },
+    "incrementPlanning": {
+      "status": "pending"
+    }
   },
   "brownfieldAnalysis": {
-    "codebaseScanner": { "status": "pending" },
-    "dependencyInventory": { "status": "pending" },
-    "architectureMapper": { "status": "pending" },
-    "apiExtractor": { "status": "pending" },
-    "dataModelExtractor": { "status": "pending" },
-    "testDiscovery": { "status": "pending" }
+    "codebaseScanner": {
+      "status": "pending"
+    },
+    "dependencyInventory": {
+      "status": "pending"
+    },
+    "architectureMapper": {
+      "status": "pending"
+    },
+    "apiExtractor": {
+      "status": "pending"
+    },
+    "dataModelExtractor": {
+      "status": "pending"
+    },
+    "testDiscovery": {
+      "status": "pending"
+    }
   },
   "specGeneration": {
-    "prdGenerator": { "status": "pending" },
-    "frdGenerator": { "status": "pending" }
+    "prdGenerator": {
+      "status": "pending"
+    },
+    "frdGenerator": {
+      "status": "pending"
+    }
   },
   "activePaths": [],
   "assessment": {},

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "UserAuth",
-  description: "A secure user authentication demo application.",
+  title: "spec2cloud",
+  description: "Application shell ready for development.",
 };
 
 export default function RootLayout({
