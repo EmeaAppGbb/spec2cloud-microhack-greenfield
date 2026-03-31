@@ -51,7 +51,7 @@ test.describe('Admin Dashboard', () => {
 
     await page.goto('/admin');
 
-    await expect(page.getByText('Access Denied')).toBeVisible();
+    await expect(page.getByText('403 Forbidden')).toBeVisible();
     await expect(page.getByText('You do not have permission to view this page.')).toBeVisible();
   });
 

@@ -187,7 +187,7 @@ Then('I should see the text {string} before the table appears', async function (
 });
 
 Then('I should see the role displayed as {string}', async function (this: CustomWorld, role: string) {
-  const locator = this.page.getByTestId('role-badge');
+  const locator = this.page.getByTestId('profile-role');
   await locator.waitFor({ timeout: 5000 });
   const text = await locator.textContent();
   assert.ok(text?.trim() === role, `Expected role "${role}" displayed but got "${text?.trim()}"`);

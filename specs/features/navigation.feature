@@ -36,3 +36,26 @@ Feature: Navigation Awareness
     Given I am on any page
     When I click the "TaskBoard" app name in the navigation bar
     Then I should be redirected to "/"
+
+  # ── inc-2: RBAC-aware navigation ─────────────────────────────────
+
+  @smoke
+  Scenario: Admin user sees Board, Profile, Admin, and Logout links
+    Given the user store is empty
+    And a registered admin "adminnavuser" with password "secureP@ss1"
+    And I am logged in as "adminnavuser" with password "secureP@ss1"
+    When I visit the "/profile" page
+    Then the NavBar should display the app name "TaskBoard" linking to "/"
+    And the NavBar should display a "Board" link to "/board"
+    And the NavBar should display a "Profile" link to "/profile"
+    And the NavBar should display an "Admin" link to "/admin"
+    And the NavBar should display a "Logout" button
+    And the NavBar should not display a "Login" link
+    And the NavBar should not display a "Register" link
+
+  Scenario: Authenticated user navigating to /board sees the board
+    Given a user exists with username "boardnavuser" and password "secureP@ss1"
+    And the user "boardnavuser" is logged in
+    When I navigate to "/board"
+    Then the NavBar should display a "Board" link to "/board"
+    And the NavBar should display a "Profile" link to "/profile"

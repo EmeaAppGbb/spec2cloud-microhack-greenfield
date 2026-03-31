@@ -27,7 +27,7 @@ test.describe('Profile Page', () => {
     await page.goto('/profile');
 
     await expect(page.getByText(username)).toBeVisible();
-    await expect(page.locator('[data-testid="role-badge"]')).toBeVisible();
+    await expect(page.locator('[data-testid="profile-role"]')).toBeVisible();
     await expect(page.getByText(/member since/i)).toBeVisible();
   });
 

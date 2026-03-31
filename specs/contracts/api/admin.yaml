@@ -1,0 +1,68 @@
+openapi: 3.0.3
+info:
+  title: TaskBoard Admin API
+  version: 1.0.0
+  description: >
+    Admin endpoints for TaskBoard — user listing restricted to admin role.
+    Requires a valid JWT cookie with role "admin".
+
+paths:
+  /api/admin/users:
+    get:
+      operationId: listUsers
+      summary: List all registered users (admin only)
+      tags: [admin]
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Array of all registered users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminUserEntry'
+              example:
+                - username: adminuser
+                  role: admin
+                  createdAt: '2025-07-14T10:00:00.000Z'
+                - username: regularuser
+                  role: user
+                  createdAt: '2025-07-14T10:05:00.000Z'
+        '401':
+          description: Not authenticated (missing or invalid JWT)
+          content:
+            application/json:
+              schema:
+                $ref: './auth.yaml#/components/schemas/ErrorResponse'
+              example:
+                error: Not authenticated
+        '403':
+          description: Forbidden (valid JWT but role is not admin)
+          content:
+            application/json:
+              schema:
+                $ref: './auth.yaml#/components/schemas/ErrorResponse'
+              example:
+                error: Forbidden
+
+components:
+  securitySchemes:
+    cookieAuth:
+      $ref: './auth.yaml#/components/securitySchemes/cookieAuth'
+
+  schemas:
+    AdminUserEntry:
+      type: object
+      required: [username, role, createdAt]
+      properties:
+        username:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp

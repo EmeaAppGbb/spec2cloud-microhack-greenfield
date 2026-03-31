@@ -118,7 +118,7 @@ Then('I should see the username {string}', async function (this: CustomWorld, us
 });
 
 Then('I should see a role badge displaying {string}', async function (this: CustomWorld, role: string) {
-  const locator = this.page.getByTestId('role-badge');
+  const locator = this.page.getByTestId('profile-role');
   await locator.waitFor({ timeout: 5000 });
   const text = await locator.textContent();
   assert.ok(text?.trim() === role, `Expected role badge to display "${role}" but got "${text?.trim()}"`);
