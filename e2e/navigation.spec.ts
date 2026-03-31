@@ -13,7 +13,8 @@ function uniqueUser() {
 }
 
 test.beforeEach(async ({ context }) => {
-  await context.request.post('http://localhost:5001/api/test/reset');
+  const apiUrl = process.env.PLAYWRIGHT_API_URL || 'http://localhost:5001';
+  try { await context.request.post(`${apiUrl}/api/test/reset`, { timeout: 5000 }); } catch { /* reset unavailable in prod */ }
   await context.clearCookies();
 });
 
@@ -24,7 +25,7 @@ test.describe('Navigation Bar', () => {
 
     await expect(nav.getByRole('link', { name: /login/i })).toBeVisible();
     await expect(nav.getByRole('link', { name: /register/i })).toBeVisible();
-    await expect(nav.getByRole('link', { name: /board/i })).not.toBeVisible();
+    await expect(nav.getByTestId('nav-board')).not.toBeVisible();
     await expect(nav.getByRole('link', { name: /profile/i })).not.toBeVisible();
     await expect(nav.getByRole('button', { name: /logout/i })).not.toBeVisible();
   });
@@ -40,12 +41,12 @@ test.describe('Navigation Bar', () => {
     await page.goto('/');
     const nav = page.getByRole('navigation');
 
-    await expect(nav.getByRole('link', { name: /board/i })).toBeVisible();
+    await expect(nav.getByTestId('nav-board')).toBeVisible();
     await expect(nav.getByRole('link', { name: /profile/i })).toBeVisible();
     await expect(nav.getByRole('button', { name: /logout/i })).toBeVisible();
     await expect(nav.getByRole('link', { name: /login/i })).not.toBeVisible();
     await expect(nav.getByRole('link', { name: /register/i })).not.toBeVisible();
-    await expect(nav.getByRole('link', { name: /admin/i })).not.toBeVisible();
+    await expect(nav.getByTestId('nav-admin')).not.toBeVisible();
   });
 
   test('admin user should see Board, Profile, Admin, and Logout', async ({ page }) => {
@@ -58,9 +59,9 @@ test.describe('Navigation Bar', () => {
     await page.goto('/');
     const nav = page.getByRole('navigation');
 
-    await expect(nav.getByRole('link', { name: /board/i })).toBeVisible();
+    await expect(nav.getByTestId('nav-board')).toBeVisible();
     await expect(nav.getByRole('link', { name: /profile/i })).toBeVisible();
-    await expect(nav.getByRole('link', { name: /admin/i })).toBeVisible();
+    await expect(nav.getByTestId('nav-admin')).toBeVisible();
     await expect(nav.getByRole('button', { name: /logout/i })).toBeVisible();
   });
 });

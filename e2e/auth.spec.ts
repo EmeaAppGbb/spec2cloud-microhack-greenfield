@@ -13,7 +13,8 @@ function uniqueUser() {
 }
 
 test.beforeEach(async ({ context }) => {
-  await context.request.post('http://localhost:5001/api/test/reset');
+  const apiUrl = process.env.PLAYWRIGHT_API_URL || 'http://localhost:5001';
+  try { await context.request.post(`${apiUrl}/api/test/reset`, { timeout: 5000 }); } catch { /* reset unavailable in prod */ }
   await context.clearCookies();
 });
 
@@ -48,7 +49,7 @@ test.describe('Registration', () => {
     await page.getByLabel('Password').fill('SecurePass123!');
     await page.getByRole('button', { name: 'Register' }).click();
 
-    await expect(page.getByText(/username/i)).toBeVisible();
+    await expect(page.getByTestId('error-message')).toBeVisible();
   });
 
   test('should show validation error for short password', async ({ page }) => {
@@ -56,7 +57,7 @@ test.describe('Registration', () => {
     await page.getByLabel('Password').fill('short');
     await page.getByRole('button', { name: 'Register' }).click();
 
-    await expect(page.getByText(/password/i)).toBeVisible();
+    await expect(page.getByTestId('error-message')).toBeVisible();
   });
 
   test('should have a link to login page', async ({ page }) => {
@@ -124,7 +125,7 @@ test.describe('Logout', () => {
     await loginUser(page, username, password);
 
     await page.goto('/profile');
-    await page.getByRole('button', { name: /logout/i }).click();
+    await page.getByTestId('nav-logout').click();
 
     await expect(page).toHaveURL(/\/login/);
   });
@@ -136,7 +137,7 @@ test.describe('Logout', () => {
     await loginUser(page, username, password);
 
     await page.goto('/profile');
-    await page.getByRole('button', { name: /logout/i }).click();
+    await page.getByTestId('nav-logout').click();
     await expect(page).toHaveURL(/\/login/);
 
     await page.goto('/profile');

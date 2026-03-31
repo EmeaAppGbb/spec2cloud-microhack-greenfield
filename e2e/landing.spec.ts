@@ -13,7 +13,8 @@ function uniqueUser() {
 }
 
 test.beforeEach(async ({ context }) => {
-  await context.request.post('http://localhost:5001/api/test/reset');
+  const apiUrl = process.env.PLAYWRIGHT_API_URL || 'http://localhost:5001';
+  try { await context.request.post(`${apiUrl}/api/test/reset`, { timeout: 5000 }); } catch { /* reset unavailable in prod */ }
   await context.clearCookies();
 });
 
