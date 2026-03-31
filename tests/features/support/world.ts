@@ -21,6 +21,8 @@ export class CustomWorld extends World {
   webBaseUrl = 'http://localhost:3000';
   storedPasswords: Record<string, string> = {};
   tamperedJwt: string | null = null;
+  lastCreatedTask: any = null;
+  pendingEditTitle: string | null = null;
 
   async apiRequest(method: string, path: string, body?: object): Promise<void> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
