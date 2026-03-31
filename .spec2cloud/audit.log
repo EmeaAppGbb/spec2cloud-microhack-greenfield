@@ -41,3 +41,5 @@
 [2026-03-31T13:30:00Z] phase=2 action=contracts-generated result=success description="inc-2: Created specs/contracts/api/admin.yaml (GET /api/admin/users)"
 [2026-03-31T13:30:00Z] phase=2 action=implementation result=success description="inc-2: Profile, NavBar, Admin, RBAC already implemented from inc-1. Test alignment complete. 31/31 API tests pass. Web builds clean."
 [2026-03-31T14:47:00Z] phase=2 action=implementation result=success description="inc-3: Task board delivered. API: task-store, task routes (GET/POST/PATCH/DELETE), 24 new unit tests (55 total). Web: full Kanban board (create form, 3 columns, task cards, move/edit/delete, all data-testid). All tests pass. Web builds clean."
+[2026-03-31T14:50:00Z] phase=2 action=implementation result=success description="inc-4: Edit & Delete delivered. Gherkin: task-edit-delete.feature (16 scenarios). Added whitespace PATCH test. All 56 API tests pass. Web builds clean."
+[2026-03-31T14:50:00Z] phase=2 action=phase-complete result=success description="All 4 increments delivered. Total: 56 API unit tests, ~95 Gherkin scenarios, ~17 e2e specs. App fully functional: auth + profile + RBAC + task board (CRUD + move)."

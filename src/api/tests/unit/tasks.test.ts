@@ -270,6 +270,22 @@ describe('Task API', () => {
       expect(res.body.error).toBe('Title is required');
     });
 
+    it('should return 400 for whitespace-only title', async () => {
+      const cookies = await registerAndLogin('patchuser6ws');
+      const createRes = await request(app)
+        .post('/api/tasks')
+        .set('Cookie', cookies)
+        .send({ title: 'Has title' });
+
+      const res = await request(app)
+        .patch(`/api/tasks/${createRes.body.id}`)
+        .set('Cookie', cookies)
+        .send({ title: '   ' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Title is required');
+    });
+
     it('should return 404 for non-existent task', async () => {
       const cookies = await registerAndLogin('patchuser7');
       const res = await request(app)
