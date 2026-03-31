@@ -143,7 +143,7 @@ A persistent navigation bar rendered in the root layout (`src/web/src/app/layout
 
 | Position | Element              | Behavior                |
 |----------|----------------------|-------------------------|
-| Left     | App name: **"UserAuth"** (links to `/`) | Navigate to landing page |
+| Left     | App name: **"TaskBoard"** (links to `/`) | Navigate to landing page |
 | Right    | **"Login"** link      | Navigate to `/login`    |
 | Right    | **"Register"** link   | Navigate to `/register` |
 
@@ -151,7 +151,8 @@ A persistent navigation bar rendered in the root layout (`src/web/src/app/layout
 
 | Position | Element               | Behavior                          |
 |----------|-----------------------|-----------------------------------|
-| Left     | App name: **"UserAuth"** (links to `/`) | Navigate to landing page |
+| Left     | App name: **"TaskBoard"** (links to `/`) | Navigate to landing page |
+| Right    | **"Board"** link      | Navigate to `/board`            |
 | Right    | **"Profile"** link     | Navigate to `/profile`            |
 | Right    | **"Logout"** button    | `POST /api/auth/logout` → redirect to `/login` |
 
@@ -159,7 +160,8 @@ A persistent navigation bar rendered in the root layout (`src/web/src/app/layout
 
 | Position | Element               | Behavior                          |
 |----------|-----------------------|-----------------------------------|
-| Left     | App name: **"UserAuth"** (links to `/`) | Navigate to landing page |
+| Left     | App name: **"TaskBoard"** (links to `/`) | Navigate to landing page |
+| Right    | **"Board"** link      | Navigate to `/board`            |
 | Right    | **"Profile"** link     | Navigate to `/profile`            |
 | Right    | **"Admin"** link       | Navigate to `/admin`              |
 | Right    | **"Logout"** button    | `POST /api/auth/logout` → redirect to `/login` |
@@ -170,6 +172,7 @@ A persistent navigation bar rendered in the root layout (`src/web/src/app/layout
 - On mount, call `GET /api/auth/me` with `credentials: 'include'`.
 - If 200: store the user object (`{ username, role }`) in state → render State B or C based on `role`.
 - If 401 or network error: render State A (not authenticated).
+- **Degraded state:** If the `/api/auth/me` call fails due to a network error (API unreachable), the NavBar renders State A (unauthenticated) as a safe default. No error indicator is shown in the NavBar itself — the page-level error state (if applicable) handles error messaging.
 - While the auth check is in flight, render only the app name (left side). Do not flash incorrect nav links.
 - Use `next/link` (`<Link>`) for all navigation links.
 - The Logout button calls `POST /api/auth/logout`, then uses `router.push('/login')` and clears the local user state.
@@ -192,16 +195,16 @@ A simple centered page with the app name, a brief description, and call-to-actio
 
 | Element              | Content                                                |
 |----------------------|--------------------------------------------------------|
-| Heading              | **"UserAuth"**                                         |
-| Description          | "A simple authentication demo application."            |
+| Heading              | **"TaskBoard"**                                        |
+| Description          | "A personal task management board. Track your work with ease." |
 | CTA (not authenticated) | Two buttons: **"Login"** (links to `/login`) and **"Register"** (links to `/register`) |
-| CTA (authenticated)  | One link: **"Go to Profile"** (links to `/profile`)    |
+| CTA (authenticated)  | One link: **"Go to Board"** (links to `/board`)        |
 
 ### 6.3 Implementation Details
 
 - This is a **client component** (`'use client'`) because it conditionally renders CTA buttons based on auth state.
 - On mount, call `GET /api/auth/me` with `credentials: 'include'`.
-- If 200: show "Go to Profile" link.
+- If 200: show "Go to Board" link.
 - If 401: show Login and Register buttons.
 - While loading: show the heading and description, but no CTA buttons (avoid flashing incorrect state).
 
@@ -217,6 +220,7 @@ A simple centered page with the app name, a brief description, and call-to-actio
 | `/login`     | No            | Client component | None                         |
 | `/register`  | No            | Client component | None                         |
 | `/profile`   | Yes           | Client component | Mandatory — redirect on 401  |
+| `/board`     | Yes           | Client component | Mandatory — redirect on 401  |
 | `/admin`     | Yes (admin)   | Client component | Mandatory — redirect on 401/403 |
 
 ### 7.2 Auth Redirect Rules
@@ -224,6 +228,7 @@ A simple centered page with the app name, a brief description, and call-to-actio
 | Scenario                                    | Behavior                                |
 |---------------------------------------------|-----------------------------------------|
 | Unauthenticated user visits `/profile`      | Redirect to `/login`                    |
+| Unauthenticated user visits `/board`        | Redirect to `/login`                    |
 | Unauthenticated user visits `/admin`        | Redirect to `/login`                    |
 | Authenticated `user` visits `/admin`        | Show 403 Forbidden page (handled by FRD-Admin) |
 | Authenticated user visits `/login`          | No forced redirect — allow access       |

@@ -140,10 +140,11 @@ function requireRole(role: 'user' | 'admin'): RequestHandler
 ### 5.3 Behavior
 
 1. **Prerequisite** — The authentication middleware (`authMiddleware`) must run first. It validates the JWT and attaches the decoded payload to `req.user`.
-2. **Extract role** — Read `req.user.role` from the decoded JWT payload (set by the auth middleware).
-3. **Check permission** — Compare `req.user.role` against the required `role` parameter.
-4. **Allow** — If the user's role matches the required role, call `next()`.
-5. **Deny** — If the user's role does not match, return `403` with `{ "error": "Forbidden" }`. Do not call `next()`.
+2. **Guard check** — If `req.user` is undefined (middleware chain misconfiguration), return `401` with `{ "error": "Not authenticated" }`. This is a defensive guard against incorrect route wiring.
+3. **Extract role** — Read `req.user.role` from the decoded JWT payload (set by the auth middleware).
+4. **Check permission** — Compare `req.user.role` against the required `role` parameter.
+5. **Allow** — If the user's role matches the required role, call `next()`.
+6. **Deny** — If the user's role does not match, return `403` with `{ "error": "Forbidden" }`. Do not call `next()`.
 
 ### 5.4 Route Wiring
 
@@ -207,7 +208,7 @@ Render the users table as described in §6.2.
 If the API call fails with a 5xx or network error, display: `Failed to load users.`
 
 #### 403 Forbidden State
-If the API returns 403, the page displays an **Access Denied** message (see §7 for details). The users table is not rendered.
+If the API returns 403, the page displays a **403 Forbidden** message (see §7 for details). The users table is not rendered.
 
 #### 401 Unauthorized State
 If the API returns 401, redirect the user to the login page (`/login`).
@@ -234,7 +235,7 @@ The `/admin` page must verify both authentication and admin role before renderin
 
 When an authenticated non-admin user navigates to `/admin`:
 
-- **Heading:** `Access Denied`
+- **Heading:** `403 Forbidden`
 - **Message:** `You do not have permission to view this page.`
 - The users table is **not** rendered.
 - No redirect occurs — the user sees the denial message on the `/admin` route.

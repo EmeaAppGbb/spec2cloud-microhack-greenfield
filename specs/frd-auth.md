@@ -174,10 +174,12 @@ On successful login, create a JWT with the following payload:
 |------------|-------------|--------------------------------------|
 | Name       | `token`     | Consistent reference across stack    |
 | HttpOnly   | `true`      | Prevents JavaScript access (XSS)    |
-| Secure     | `true`      | HTTPS only in production             |
+| Secure     | `true` in production, `false` in development | Set based on `NODE_ENV !== 'development'`. Required for HTTPS in production; disabled for HTTP in local dev. |
 | SameSite   | `Strict`    | CSRF protection                      |
 | Path       | `/`         | Available to all routes              |
 | Max-Age    | `86400`     | 24 hours in seconds                  |
+
+**Environment-aware cookie settings:** The `Secure` flag must be set dynamically based on `NODE_ENV`. When `NODE_ENV === 'development'`, set `Secure: false` to allow cookies over HTTP. In all other environments, set `Secure: true`.
 
 ### 4.3 Cookie Clearing (Logout)
 
@@ -199,6 +201,24 @@ Set the `token` cookie with an empty value and `Max-Age=0` to instruct the brows
 
 ---
 
+## 5a. CORS Configuration
+
+The Express API must enable Cross-Origin Resource Sharing (CORS) to allow requests from the frontend origin.
+
+| Setting | Value | Rationale |
+|---------|-------|-----------|
+| `origin` | `process.env.CORS_ORIGIN` or `http://localhost:3000` (default) | Frontend origin; configurable per environment |
+| `credentials` | `true` | Required for HTTP-only cookie transmission |
+| `methods` | `GET, POST, PATCH, DELETE, OPTIONS` | All HTTP methods used by the API |
+| `allowedHeaders` | `Content-Type` | Standard request headers |
+
+**Development:** Allow `http://localhost:3000` and `http://localhost:3001` (Aspire proxy).
+**Production:** Set `CORS_ORIGIN` environment variable to the deployed frontend URL.
+
+CORS middleware must be applied globally before any route handlers. Use the `cors` npm package.
+
+---
+
 ## 6. Frontend Behavior
 
 ### 6.1 Register Page (`/register`)
@@ -208,6 +228,7 @@ Set the `token` cookie with an empty value and `Max-Age=0` to instruct the brows
 | Route             | `/register`                                                   |
 | Form fields       | Username (text input), Password (password input)              |
 | Submit button     | Label: "Register"                                             |
+| Submit behavior   | Submit button disables and shows a loading indicator (e.g., "Registering…") while the request is in flight. Re-enables on response (success or error). This prevents duplicate submissions. |
 | Client validation | Username: required, 3–30 chars, alphanumeric + underscores. Password: required, 8+ chars |
 | On 201            | Redirect to `/login` with query param `?registered=true`; login page shows "Registration successful. Please log in." |
 | On 400 / 409      | Display the `error` value from the response body inline above the form |
@@ -220,9 +241,10 @@ Set the `token` cookie with an empty value and `Max-Age=0` to instruct the brows
 | Route             | `/login`                                                      |
 | Form fields       | Username (text input), Password (password input)              |
 | Submit button     | Label: "Log in"                                               |
+| Submit behavior   | Submit button disables and shows a loading indicator (e.g., "Logging in…") while the request is in flight. Re-enables on response (success or error). This prevents duplicate submissions. |
 | Client validation | Username: required. Password: required                        |
 | Success message   | If `?registered=true` query param is present, show "Registration successful. Please log in." |
-| On 200            | Redirect to `/profile`                                        |
+| On 200            | Redirect to `/board`                                          |
 | On 400 / 401      | Display the `error` value from the response body inline above the form |
 | Link              | "Don't have an account? Register" → navigates to `/register` |
 
@@ -270,7 +292,8 @@ All error responses use a consistent shape:
 | Concurrent registration of same name  | In-memory Map operations are synchronous in Node.js (single-threaded event loop), so the first request to write wins. The second receives 409. No race condition in single-process deployments |
 | Very long username (>30 chars)        | Rejected by regex — return format validation error                                                |
 | Very long password (>10 000 chars)    | bcrypt truncates at 72 bytes; accepted but only first 72 bytes are hashed. Consider adding a max-length check in a future iteration, but not required for this FRD |
-| Missing Content-Type header           | Express `express.json()` middleware returns 400 if body is not parseable as JSON                  |
+| Missing Content-Type header           | Express `express.json()` middleware returns 400 with `{ "error": "Invalid request body" }`. The API must configure a custom error handler for JSON parse failures to return a consistent error shape. |
+| Malformed JSON body                   | Same as above — return 400 with `{ "error": "Invalid request body" }` rather than Express's default HTML error page. |
 | Duplicate login (already logged in)   | Allowed — new JWT overwrites the existing cookie                                                  |
 | Logout when not logged in             | Returns 200 — clearing a non-existent cookie is a no-op and idempotent                           |
 

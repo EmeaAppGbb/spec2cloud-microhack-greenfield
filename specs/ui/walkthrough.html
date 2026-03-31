@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskBoard — UI Walkthrough</title>
+  <style>
+    :root {
+      --color-primary: #2563eb;
+      --color-primary-hover: #1d4ed8;
+      --color-secondary: #64748b;
+      --color-accent: #16a34a;
+      --color-error: #dc2626;
+      --color-bg: #ffffff;
+      --color-bg-alt: #f8fafc;
+      --color-text: #1e293b;
+      --color-text-muted: #64748b;
+      --color-border: #e2e8f0;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--color-bg-alt);
+      color: var(--color-text);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .header-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    .header-title span {
+      color: var(--color-text);
+      font-weight: 400;
+      font-size: 1rem;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .progress-track {
+      width: 180px;
+      height: 6px;
+      background: var(--color-border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--color-primary);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+    .progress-label {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+    }
+
+    /* Main content */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1.5rem;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Step card */
+    .step-card {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      width: 100%;
+      overflow: hidden;
+    }
+    .step-header {
+      background: var(--color-primary);
+      color: #fff;
+      padding: 1.25rem 1.5rem;
+    }
+    .step-number {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.85;
+      margin-bottom: 0.25rem;
+    }
+    .step-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .step-body {
+      padding: 1.5rem;
+    }
+    .step-description {
+      font-size: 1rem;
+      color: var(--color-text);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+    .step-prototype {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      background: var(--color-bg-alt);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+    }
+    .step-prototype-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--color-primary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-prototype-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: #fff;
+    }
+    .step-prototype-info {
+      flex: 1;
+    }
+    .step-prototype-label {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .step-prototype-file {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text);
+      font-family: ui-monospace, monospace;
+    }
+    .open-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .open-btn:hover { background: var(--color-primary-hover); }
+    .open-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: #fff;
+    }
+
+    /* Navigation */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 0;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-sm);
+    }
+    .nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .nav-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* Step dots */
+    .step-dots {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--color-border);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+      border: none;
+      padding: 0;
+    }
+    .dot:hover { background: var(--color-secondary); }
+    .dot.active {
+      background: var(--color-primary);
+      transform: scale(1.3);
+    }
+    .dot.visited { background: var(--color-secondary); }
+
+    /* Keyboard hint */
+    .keyboard-hint {
+      text-align: center;
+      padding-bottom: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+    kbd {
+      display: inline-block;
+      padding: 0.15em 0.4em;
+      font-family: ui-monospace, monospace;
+      font-size: 0.75rem;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      box-shadow: 0 1px 0 var(--color-border);
+    }
+
+    @media (max-width: 600px) {
+      .header { padding: 0.75rem 1rem; }
+      .main { padding: 1rem; }
+      .step-title { font-size: 1.25rem; }
+      .progress-track { width: 100px; }
+      .step-dots { gap: 0.35rem; }
+      .dot { width: 8px; height: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-title">TaskBoard <span>— UI Walkthrough</span></div>
+    <div class="progress-bar">
+      <span class="progress-label" id="progress-label">Step 1 of 10</span>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width: 10%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="step-card" id="step-card">
+      <div class="step-header">
+        <div class="step-number" id="step-number">Step 1</div>
+        <div class="step-title" id="step-title">Welcome — Landing Page</div>
+      </div>
+      <div class="step-body">
+        <div class="step-description" id="step-description">
+          New users arrive at the landing page. They see the TaskBoard name and CTA buttons.
+        </div>
+        <div class="step-prototype">
+          <div class="step-prototype-icon">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm0 16H5V7h14v12z"/></svg>
+          </div>
+          <div class="step-prototype-info">
+            <div class="step-prototype-label">Prototype</div>
+            <div class="step-prototype-file" id="step-file">prototypes/landing.html</div>
+          </div>
+          <a class="open-btn" id="open-btn" href="prototypes/landing.html" target="_blank" rel="noopener">
+            Open Prototype
+            <svg viewBox="0 0 24 24"><path d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7zm-2 16H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7h-2v7H5z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <button class="nav-btn" id="prev-btn" disabled>
+        <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        Previous
+      </button>
+      <div class="step-dots" id="step-dots"></div>
+      <button class="nav-btn" id="next-btn">
+        Next
+        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="keyboard-hint">
+    Navigate with <kbd>←</kbd> <kbd>→</kbd> arrow keys
+  </div>
+
+  <script>
+    var steps = [
+      {
+        title: "Welcome \u2014 Landing Page",
+        description: "New users arrive at the landing page. They see the TaskBoard name and CTA buttons.",
+        file: "prototypes/landing.html"
+      },
+      {
+        title: "Register an Account",
+        description: "User clicks Register, fills in username (3\u201330 chars) and password (8+ chars). Form validates client-side.",
+        file: "prototypes/register.html"
+      },
+      {
+        title: "Log In",
+        description: "After registration, user is redirected to login with a success message. They enter credentials.",
+        file: "prototypes/login.html"
+      },
+      {
+        title: "First Visit \u2014 Empty Board",
+        description: "After login, user lands on the board. Three empty columns are shown: To Do (0), In Progress (0), Done (0).",
+        file: "prototypes/board.html"
+      },
+      {
+        title: "Create a Task",
+        description: "User fills the title field and optionally adds a description. The task appears in the To Do column.",
+        file: "prototypes/board.html"
+      },
+      {
+        title: "Move Tasks Between Columns",
+        description: "Use arrow buttons to move tasks: To Do \u2192 In Progress \u2192 Done, or back. Column counts update.",
+        file: "prototypes/board.html"
+      },
+      {
+        title: "Edit Task Details",
+        description: "Click a task title or edit button. The card transforms to an inline form. Save or cancel changes.",
+        file: "prototypes/board.html"
+      },
+      {
+        title: "Delete a Task",
+        description: "Click the \u00d7 button. A confirmation dialog appears. On confirm, the task is removed.",
+        file: "prototypes/board.html"
+      },
+      {
+        title: "View Profile",
+        description: "User clicks Profile in the nav. They see their username, role badge, and member since date.",
+        file: "prototypes/profile.html"
+      },
+      {
+        title: "Admin Dashboard",
+        description: "Admin users see a table of all registered users. Non-admin users see a 403 Forbidden page.",
+        file: "prototypes/admin.html"
+      }
+    ];
+
+    var current = 0;
+    var visited = [true];
+
+    var stepNumber = document.getElementById("step-number");
+    var stepTitle = document.getElementById("step-title");
+    var stepDescription = document.getElementById("step-description");
+    var stepFile = document.getElementById("step-file");
+    var openBtn = document.getElementById("open-btn");
+    var prevBtn = document.getElementById("prev-btn");
+    var nextBtn = document.getElementById("next-btn");
+    var progressLabel = document.getElementById("progress-label");
+    var progressFill = document.getElementById("progress-fill");
+    var dotsContainer = document.getElementById("step-dots");
+
+    // Build dots
+    for (var i = 0; i < steps.length; i++) {
+      var dot = document.createElement("button");
+      dot.className = "dot" + (i === 0 ? " active" : "");
+      dot.setAttribute("aria-label", "Go to step " + (i + 1));
+      dot.setAttribute("data-index", i);
+      dot.addEventListener("click", function() {
+        goTo(parseInt(this.getAttribute("data-index")));
+      });
+      dotsContainer.appendChild(dot);
+    }
+
+    function render() {
+      var s = steps[current];
+      stepNumber.textContent = "Step " + (current + 1);
+      stepTitle.textContent = s.title;
+      stepDescription.textContent = s.description;
+      stepFile.textContent = s.file;
+      openBtn.href = s.file;
+      progressLabel.textContent = "Step " + (current + 1) + " of " + steps.length;
+      progressFill.style.width = ((current + 1) / steps.length * 100) + "%";
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === steps.length - 1;
+
+      var dots = dotsContainer.querySelectorAll(".dot");
+      for (var i = 0; i < dots.length; i++) {
+        dots[i].className = "dot";
+        if (i === current) dots[i].className += " active";
+        else if (visited[i]) dots[i].className += " visited";
+      }
+    }
+
+    function goTo(index) {
+      if (index < 0 || index >= steps.length) return;
+      current = index;
+      visited[current] = true;
+      render();
+    }
+
+    prevBtn.addEventListener("click", function() { goTo(current - 1); });
+    nextBtn.addEventListener("click", function() { goTo(current + 1); });
+
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "ArrowLeft") goTo(current - 1);
+      if (e.key === "ArrowRight") goTo(current + 1);
+    });
+
+    render();
+  </script>
+</body>
+</html>
