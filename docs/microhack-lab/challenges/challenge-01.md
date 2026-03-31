@@ -20,6 +20,7 @@ Set up your development environment with all required tools, create your own rep
 * Create your repository from the template:
     ```bash
     gh repo create my-task-board --template EmeaAppGbb/shell-typescript --public
+    git clone https://github.com/<your-org>/my-task-board.git
     cd my-task-board
     ```
 * Install dependencies:
