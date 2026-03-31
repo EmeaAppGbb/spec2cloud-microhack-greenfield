@@ -1,14 +1,30 @@
 # Application User Manual
 
-This documentation is auto-generated from Gherkin feature specifications
-and Playwright test screenshots. Each page shows a feature as a visual
-step-by-step walkthrough — the living specification of how the application works.
+This documentation is auto-generated from Gherkin feature specifications,
+Playwright test screenshots, and UI/UX wireframe prototypes. Each feature page
+shows the approved wireframe design alongside the living specification of how
+the application works.
+
+## Design
+
+The UI/UX design was approved in Phase 2 and grounds all feature implementations:
+
+- [**Screen Map**](design/screen-map.md) — all screens, navigation flows, and FRD mapping
+- [**Design System**](design/design-system.md) — colors, typography, spacing, components
+- [**Component Inventory**](design/components.md) — all UI components with props and states
+- [**Interactive Walkthrough**](design/walkthrough.md) — replayable visual walkthrough of all user flows
+- [**Browse Prototypes**](design/prototypes/index.html) — interactive HTML wireframes
 
 ## Features
 
-- [**Authentication**](features/authentication.md) — 20 scenarios @auth
-- [**Profile page, navigation bar, and landing page**](features/profile-page-navigation-bar-and-landing-page.md) — 17 scenarios @profile
-- [**Role-Based Access Control (RBAC)**](features/role-based-access-control-rbac.md) — 12 scenarios @rbac @admin @roles @authorization
+- [**User Authentication**](features/user-authentication.md) — 38 scenarios @auth
+- [**Landing Page**](features/landing-page.md) — 5 scenarios @landing
+- [**Navigation Awareness**](features/navigation-awareness.md) — 7 scenarios @navigation
+- [**User Profile**](features/user-profile.md) — 5 scenarios @profile
+- [**Role-Based Access Control**](features/role-based-access-control.md) — 8 scenarios @rbac @admin
+- [**Task Board — View and Move**](features/task-board-view-and-move.md) — 16 scenarios @tasks @board
+- [**Task Edit and Delete**](features/task-edit-and-delete.md) — 15 scenarios @tasks @edit @delete
+- [**Task Management — Create**](features/task-management-create.md) — 10 scenarios @tasks @create
 
 ---
 
