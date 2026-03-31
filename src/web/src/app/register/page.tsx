@@ -4,20 +4,37 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
+
 export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
 
+    if (!USERNAME_RE.test(username)) {
+      setError(
+        'Username must be between 3 and 30 characters and contain only letters, numbers, and underscores',
+      );
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    setSubmitting(true);
+
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
 
@@ -29,6 +46,8 @@ export default function RegisterPage() {
       }
     } catch {
       setError('An error occurred. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -38,7 +57,7 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-bold text-gray-900">Register</h1>
 
         {error && (
-          <p className="rounded bg-red-50 p-3 text-red-800">{error}</p>
+          <p data-testid="error-message" className="rounded bg-red-50 p-3 text-red-800">{error}</p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -48,6 +67,7 @@ export default function RegisterPage() {
             </label>
             <input
               id="username"
+              data-testid="username-input"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -61,6 +81,7 @@ export default function RegisterPage() {
             </label>
             <input
               id="password"
+              data-testid="password-input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -70,15 +91,17 @@ export default function RegisterPage() {
           </div>
           <button
             type="submit"
-            className="w-full rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+            data-testid="register-btn"
+            disabled={submitting}
+            className="w-full rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Register
+            {submitting ? 'Registering\u2026' : 'Register'}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-600">
           Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <Link href="/login" data-testid="login-link" className="text-blue-600 hover:underline">
             Log in
           </Link>
         </p>

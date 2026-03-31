@@ -2,7 +2,7 @@ import { type Express } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
-import { getUserByUsername, addUser, getUserById, getUsers } from '../models/user-store.js';
+import { getUserByUsername, addUser, getUserById, getUserCount } from '../models/user-store.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const getSecret = (): string => {
@@ -13,6 +13,7 @@ const getSecret = (): string => {
   return secret;
 };
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
+const isSecure = process.env.NODE_ENV !== 'development';
 
 export function mapAuthEndpoints(app: Express): void {
   app.post('/api/auth/register', async (req, res) => {
@@ -45,7 +46,7 @@ export function mapAuthEndpoints(app: Express): void {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const role = getUsers().size === 0 ? 'admin' : 'user';
+    const role = getUserCount() === 0 ? 'admin' : 'user';
 
     const userId = crypto.randomUUID();
     addUser({
@@ -64,13 +65,13 @@ export function mapAuthEndpoints(app: Express): void {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true,
+      secure: isSecure,
       sameSite: 'strict',
       path: '/',
       maxAge: 86400 * 1000,
     });
 
-    res.status(201).json({ message: 'Registration successful', role });
+    res.status(201).json({ message: 'Registration successful' });
   });
 
   app.post('/api/auth/login', async (req, res) => {
@@ -101,7 +102,7 @@ export function mapAuthEndpoints(app: Express): void {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true,
+      secure: isSecure,
       sameSite: 'strict',
       path: '/',
       maxAge: 86400 * 1000,
@@ -113,7 +114,7 @@ export function mapAuthEndpoints(app: Express): void {
   app.post('/api/auth/logout', (_req, res) => {
     res.cookie('token', '', {
       httpOnly: true,
-      secure: true,
+      secure: isSecure,
       sameSite: 'strict',
       path: '/',
       maxAge: 0,

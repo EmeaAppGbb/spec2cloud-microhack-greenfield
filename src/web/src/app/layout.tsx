@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "UserAuth",
-  description: "A secure user authentication demo application.",
+  title: "TaskBoard",
+  description: "A personal task management board. Track your work with ease.",
 };
 
 export default function RootLayout({

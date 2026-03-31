@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -15,8 +15,28 @@ export function createApp(): express.Express {
 
   // Middleware
   app.use(helmet());
-  app.use(cors());
+
+  const allowedOrigins = process.env.CORS_ORIGIN
+    ? [process.env.CORS_ORIGIN]
+    : ['http://localhost:3000', 'http://localhost:3001'];
+  app.use(cors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  }));
+
   app.use(express.json());
+  // Custom error handler for malformed JSON bodies
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+    if (err.type === 'entity.parse.failed' || (err instanceof SyntaxError && 'body' in err)) {
+      res.status(400).json({ error: 'Invalid request body' });
+      return;
+    }
+    next(err);
+  });
+
   app.use(cookieParser());
   app.use(pinoHttp({ logger }));
 

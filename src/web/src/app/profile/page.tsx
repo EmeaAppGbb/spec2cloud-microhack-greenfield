@@ -26,7 +26,7 @@ export default function ProfilePage() {
   function fetchProfile() {
     setLoading(true);
     setError(false);
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
         if (res.status === 401) {
           router.push('/login');
@@ -48,14 +48,14 @@ export default function ProfilePage() {
   }, []);
 
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     router.push('/login');
   }
 
   if (loading) {
     return (
       <main className="flex min-h-[80vh] items-center justify-center">
-        <p className="text-gray-600">Loading profile…</p>
+        <p data-testid="profile-loading" className="text-gray-600">Loading profile…</p>
       </main>
     );
   }
@@ -78,15 +78,33 @@ export default function ProfilePage() {
 
   return (
     <main className="flex min-h-[80vh] items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">{user.username}</h1>
-        <span data-testid="role-badge" className="inline-block rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
-          {user.role}
-        </span>
-        <p className="text-gray-600">
-          Member since {formatDate(user.createdAt)}
-        </p>
-        <p className="text-sm text-gray-400">Use the Logout button in the navigation bar to sign out.</p>
+      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <h1 data-testid="profile-heading" className="mb-4 text-2xl font-bold text-gray-900">Profile</h1>
+        <div className="space-y-4">
+          <div>
+            <div className="text-sm font-medium text-gray-500">Username</div>
+            <div data-testid="profile-username" className="text-gray-900">{user.username}</div>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-gray-500">Role</div>
+            <span data-testid="profile-role" className="inline-block rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
+              {user.role}
+            </span>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-gray-500">Member since</div>
+            <div data-testid="profile-created-at" className="text-gray-900">{formatDate(user.createdAt)}</div>
+          </div>
+        </div>
+        <div className="mt-6">
+          <button
+            data-testid="profile-logout-btn"
+            onClick={handleLogout}
+            className="w-full rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </main>
   );

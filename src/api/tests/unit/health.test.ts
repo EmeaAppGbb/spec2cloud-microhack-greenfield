@@ -5,11 +5,10 @@ import { createApp } from '../../src/app.js';
 describe('Health Endpoints', () => {
   const app = createApp();
 
-  it('GET /health should return healthy status', async () => {
+  it('GET /health should return ok status', async () => {
     const res = await request(app).get('/health');
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe('healthy');
-    expect(res.body.timestamp).toBeDefined();
+    expect(res.body.status).toBe('ok');
   });
 
   it('GET /api/info should return version info', async () => {

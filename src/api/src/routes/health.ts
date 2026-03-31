@@ -2,7 +2,7 @@ import { type Express } from 'express';
 
 export function mapHealthEndpoints(app: Express): void {
   app.get('/health', (_req, res) => {
-    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+    res.json({ status: 'ok' });
   });
 
   app.get('/api/info', (_req, res) => {

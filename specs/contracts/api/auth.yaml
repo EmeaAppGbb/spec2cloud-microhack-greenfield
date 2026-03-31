@@ -1,0 +1,278 @@
+openapi: 3.0.3
+info:
+  title: TaskBoard Auth API
+  version: 1.0.0
+  description: >
+    Authentication endpoints for TaskBoard — register, login, logout, and
+    current-user profile.  JWT is delivered via HTTP-only cookie named "token".
+
+paths:
+  /api/auth/register:
+    post:
+      operationId: register
+      summary: Register a new user
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registration successful
+          headers:
+            Set-Cookie:
+              description: JWT token cookie (httpOnly, secure, sameSite=strict)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              example:
+                message: Registration successful
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                usernameRequired:
+                  value:
+                    error: Username is required
+                usernameFormat:
+                  value:
+                    error: >-
+                      Username must be between 3 and 30 characters and contain
+                      only letters, numbers, and underscores
+                passwordRequired:
+                  value:
+                    error: Password is required
+                passwordLength:
+                  value:
+                    error: Password must be at least 8 characters
+        '409':
+          description: Username already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Username already exists
+
+  /api/auth/login:
+    post:
+      operationId: login
+      summary: Authenticate user and issue JWT cookie
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful (JWT set in httpOnly cookie)
+          headers:
+            Set-Cookie:
+              description: JWT token cookie (httpOnly, secure, sameSite=strict)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              example:
+                message: Login successful
+        '400':
+          description: Missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Username and password are required
+        '401':
+          description: Invalid credentials (generic message — no user enumeration)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Invalid username or password
+
+  /api/auth/logout:
+    post:
+      operationId: logout
+      summary: Clear session cookie
+      tags: [auth]
+      responses:
+        '200':
+          description: Logged out
+          headers:
+            Set-Cookie:
+              description: Cleared token cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              example:
+                message: Logged out successfully
+
+  /api/auth/me:
+    get:
+      operationId: getCurrentUser
+      summary: Get current authenticated user profile
+      tags: [auth]
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+              example:
+                username: janedoe
+                role: user
+                createdAt: '2025-01-15T08:30:00.000Z'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Not authenticated
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      tags: [system]
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: >
+        JWT issued on login/register.  Cookie flags: httpOnly, secure,
+        sameSite=strict.  Expires in 24 h.
+
+  schemas:
+    # ── Requests ──────────────────────────────────────────────
+
+    RegisterRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 30
+          pattern: '^[a-zA-Z0-9_]{3,30}$'
+          description: Alphanumeric + underscore, 3-30 chars
+        password:
+          type: string
+          minLength: 8
+          description: Minimum 8 characters (no trim applied)
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    # ── Responses ─────────────────────────────────────────────
+
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    UserProfile:
+      type: object
+      required: [username, role, createdAt]
+      properties:
+        username:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp
+
+    # ── Domain model (for reference — not exposed directly) ──
+
+    User:
+      type: object
+      description: Internal user entity (never returned as-is)
+      required: [id, username, passwordHash, role, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: UUID v4
+        username:
+          type: string
+        passwordHash:
+          type: string
+          description: bcrypt hash (cost ≥ 10)
+        role:
+          type: string
+          enum: [user, admin]
+          description: First registered user is admin; all others are user
+        createdAt:
+          type: string
+          format: date-time
+
+    JwtPayload:
+      type: object
+      description: JWT claims (HS256, 24 h expiry, secret from JWT_SECRET)
+      required: [sub, username, role]
+      properties:
+        sub:
+          type: string
+          description: User id (UUID)
+        username:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        iat:
+          type: integer
+        exp:
+          type: integer

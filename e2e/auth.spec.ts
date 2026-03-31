@@ -72,7 +72,7 @@ test.describe('Login', () => {
     await page.goto('/login');
   });
 
-  test('should login with valid credentials and redirect to profile', async ({ page }) => {
+  test('should login with valid credentials and redirect to board', async ({ page }) => {
     const username = uniqueUser();
     const password = 'SecurePass123!';
     await registerUser(page, username, password);
@@ -81,7 +81,7 @@ test.describe('Login', () => {
     await page.getByLabel('Password').fill(password);
     await page.getByRole('button', { name: 'Log in' }).click();
 
-    await expect(page).toHaveURL(/\/profile/);
+    await expect(page).toHaveURL(/\/board/);
   });
 
   test('should show error for wrong password', async ({ page }) => {

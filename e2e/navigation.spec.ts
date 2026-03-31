@@ -18,17 +18,18 @@ test.beforeEach(async ({ context }) => {
 });
 
 test.describe('Navigation Bar', () => {
-  test('guest should see Login and Register links but not Profile or Logout', async ({ page }) => {
+  test('guest should see Login and Register links but not Board, Profile, or Logout', async ({ page }) => {
     await page.goto('/');
     const nav = page.getByRole('navigation');
 
     await expect(nav.getByRole('link', { name: /login/i })).toBeVisible();
     await expect(nav.getByRole('link', { name: /register/i })).toBeVisible();
+    await expect(nav.getByRole('link', { name: /board/i })).not.toBeVisible();
     await expect(nav.getByRole('link', { name: /profile/i })).not.toBeVisible();
     await expect(nav.getByRole('button', { name: /logout/i })).not.toBeVisible();
   });
 
-  test('logged-in user should see Profile and Logout but not Login, Register, or Admin', async ({ page }) => {
+  test('logged-in user should see Board, Profile, and Logout but not Login, Register, or Admin', async ({ page }) => {
     // Register a dummy admin first so the test user gets 'user' role
     await registerUser(page, uniqueUser(), 'SecurePass123!');
     const username = uniqueUser();
@@ -39,6 +40,7 @@ test.describe('Navigation Bar', () => {
     await page.goto('/');
     const nav = page.getByRole('navigation');
 
+    await expect(nav.getByRole('link', { name: /board/i })).toBeVisible();
     await expect(nav.getByRole('link', { name: /profile/i })).toBeVisible();
     await expect(nav.getByRole('button', { name: /logout/i })).toBeVisible();
     await expect(nav.getByRole('link', { name: /login/i })).not.toBeVisible();
@@ -46,7 +48,7 @@ test.describe('Navigation Bar', () => {
     await expect(nav.getByRole('link', { name: /admin/i })).not.toBeVisible();
   });
 
-  test('admin user should see Profile, Admin, and Logout', async ({ page }) => {
+  test('admin user should see Board, Profile, Admin, and Logout', async ({ page }) => {
     // The first registered user becomes admin
     const username = uniqueUser();
     const password = 'SecurePass123!';
@@ -56,6 +58,7 @@ test.describe('Navigation Bar', () => {
     await page.goto('/');
     const nav = page.getByRole('navigation');
 
+    await expect(nav.getByRole('link', { name: /board/i })).toBeVisible();
     await expect(nav.getByRole('link', { name: /profile/i })).toBeVisible();
     await expect(nav.getByRole('link', { name: /admin/i })).toBeVisible();
     await expect(nav.getByRole('button', { name: /logout/i })).toBeVisible();

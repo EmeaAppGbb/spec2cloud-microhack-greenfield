@@ -1,5 +1,6 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { getUserById } from '../models/user-store.js';
 
 interface JwtPayload {
   sub: string;
@@ -32,6 +33,14 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 
   try {
     const decoded = jwt.verify(token, getSecret()) as JwtPayload;
+
+    // Verify user still exists in store
+    const user = getUserById(decoded.sub);
+    if (!user) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
+
     req.user = decoded;
     next();
   } catch {
@@ -41,7 +50,12 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 
 export function requireRole(role: string) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (req.user?.role !== role) {
+    // Defensive guard: if auth middleware didn't run or set req.user
+    if (!req.user) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
+    if (req.user.role !== role) {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
