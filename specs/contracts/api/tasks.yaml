@@ -1,0 +1,270 @@
+openapi: 3.0.3
+info:
+  title: TaskBoard Tasks API
+  version: 1.0.0
+  description: >
+    Task CRUD endpoints for TaskBoard — create, list, update (including status
+    transitions), and delete tasks.  All endpoints require authentication via
+    JWT cookie.  Tasks are scoped to the authenticated user.
+
+paths:
+  /api/tasks:
+    get:
+      operationId: listTasks
+      summary: List all tasks for the authenticated user
+      tags: [tasks]
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Array of tasks sorted by createdAt ascending
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskResponse'
+              example:
+                - id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                  title: Buy groceries
+                  description: ''
+                  status: todo
+                  createdAt: '2025-01-15T08:30:00.000Z'
+                - id: b2c3d4e5-f6a7-8901-bcde-f12345678901
+                  title: Plan sprint
+                  description: Review backlog items
+                  status: in_progress
+                  createdAt: '2025-01-15T09:00:00.000Z'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Not authenticated
+
+    post:
+      operationId: createTask
+      summary: Create a new task
+      tags: [tasks]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                title: Implement login page
+                description: Build the login form with validation
+                status: todo
+                createdAt: '2025-01-15T10:30:00.000Z'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                titleRequired:
+                  value:
+                    error: Title is required
+                titleTooLong:
+                  value:
+                    error: Title must be 120 characters or fewer
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Not authenticated
+
+  /api/tasks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Task UUID
+
+    patch:
+      operationId: updateTask
+      summary: Update a task (title, description, or status)
+      tags: [tasks]
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              example:
+                id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                title: Updated title
+                description: Updated description
+                status: in_progress
+                createdAt: '2025-01-15T10:30:00.000Z'
+        '400':
+          description: Validation error or invalid status transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                titleRequired:
+                  value:
+                    error: Title is required
+                titleTooLong:
+                  value:
+                    error: Title must be 120 characters or fewer
+                invalidStatus:
+                  value:
+                    error: Invalid status value
+                invalidTransition:
+                  value:
+                    error: Invalid status transition
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Not authenticated
+        '404':
+          description: Task not found or not owned by authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Task not found
+
+    delete:
+      operationId: deleteTask
+      summary: Delete a task (inc-4 scope — contract defined now)
+      tags: [tasks]
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Task deleted (no content)
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Not authenticated
+        '404':
+          description: Task not found or not owned by authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Task not found
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: >
+        JWT issued on login/register.  Cookie flags: httpOnly, secure,
+        sameSite=strict.  Expires in 24 h.
+
+  schemas:
+    # ── Requests ──────────────────────────────────────────────
+
+    CreateTaskRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Task title (1–120 characters, non-empty after trim)
+        description:
+          type: string
+          default: ''
+          description: Optional task description (defaults to empty string)
+
+    UpdateTaskRequest:
+      type: object
+      description: >
+        Partial update — all fields optional.  An empty body {} is valid
+        (returns the task unchanged).
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: If provided, 1–120 characters, non-empty after trim
+        description:
+          type: string
+          description: If provided, replaces the existing description
+        status:
+          type: string
+          enum: [todo, in_progress, done]
+          description: >
+            If provided, must be a valid adjacent transition.
+            Allowed: todo↔in_progress, in_progress↔done.
+            Forbidden: todo→done, done→todo.
+
+    # ── Responses ─────────────────────────────────────────────
+
+    TaskResponse:
+      type: object
+      required: [id, title, description, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Task UUID (generated via crypto.randomUUID)
+        title:
+          type: string
+          description: Task title
+        description:
+          type: string
+          description: Task description (may be empty string)
+        status:
+          type: string
+          enum: [todo, in_progress, done]
+          description: Current task status
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of task creation
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string

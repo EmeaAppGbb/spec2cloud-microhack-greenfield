@@ -8,7 +8,9 @@ import { mapHealthEndpoints } from './routes/health.js';
 import { mapChatEndpoints } from './routes/chat.js';
 import { mapAuthEndpoints } from './routes/auth.js';
 import { mapAdminEndpoints } from './routes/admin.js';
+import { mapTaskEndpoints } from './routes/tasks.js';
 import { clearUsers, addUser, getUserByUsername, deleteUser } from './models/user-store.js';
+import { clearTasks } from './models/task-store.js';
 
 export function createApp(): express.Express {
   const app = express();
@@ -45,11 +47,13 @@ export function createApp(): express.Express {
   mapChatEndpoints(app);
   mapAuthEndpoints(app);
   mapAdminEndpoints(app);
+  mapTaskEndpoints(app);
 
   // Test-only: reset endpoint for e2e test isolation
   if (process.env.NODE_ENV !== 'production') {
     app.post('/api/test/reset', (_req, res) => {
       clearUsers();
+      clearTasks();
       res.json({ message: 'Store cleared' });
     });
 

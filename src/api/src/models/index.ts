@@ -14,3 +14,13 @@ export interface InfoResponse {
   version: string;
   framework: string;
 }
+
+export {
+  createTask,
+  getTasksByUser,
+  getTaskById,
+  updateTask,
+  deleteTask,
+  clearTasks,
+} from './task-store.js';
+export type { TaskRecord } from './task-store.js';

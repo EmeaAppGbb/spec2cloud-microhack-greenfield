@@ -47,3 +47,33 @@ export interface JwtPayload {
   iat?: number;
   exp?: number;
 }
+
+// ── Task domain model ────────────────────────────────────────
+
+export type TaskStatus = 'todo' | 'in_progress' | 'done';
+
+export interface Task {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  createdAt: string;
+}
+
+// ── Task request types ───────────────────────────────────────
+
+export interface CreateTaskRequest {
+  title: string;
+  description?: string;
+}
+
+export interface UpdateTaskRequest {
+  title?: string;
+  description?: string;
+  status?: TaskStatus;
+}
+
+// ── Task response types ──────────────────────────────────────
+
+export type TaskResponse = Omit<Task, 'userId'>;
