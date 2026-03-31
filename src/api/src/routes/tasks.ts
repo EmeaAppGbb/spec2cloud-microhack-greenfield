@@ -49,7 +49,8 @@ export function mapTaskEndpoints(app: Express): void {
   });
 
   app.patch('/api/tasks/:id', authMiddleware, (req, res) => {
-    const task = getTaskById(req.params.id);
+    const taskId = req.params.id as string;
+    const task = getTaskById(taskId);
     if (!task || task.userId !== req.user!.sub) {
       res.status(404).json({ error: 'Task not found' });
       return;
@@ -84,18 +85,19 @@ export function mapTaskEndpoints(app: Express): void {
     if (description !== undefined) updates.description = description;
     if (status !== undefined) updates.status = status;
 
-    const updated = updateTask(req.params.id, updates);
+    const updated = updateTask(taskId, updates);
     res.json(toResponse(updated!));
   });
 
   app.delete('/api/tasks/:id', authMiddleware, (req, res) => {
-    const task = getTaskById(req.params.id);
+    const taskId = req.params.id as string;
+    const task = getTaskById(taskId);
     if (!task || task.userId !== req.user!.sub) {
       res.status(404).json({ error: 'Task not found' });
       return;
     }
 
-    deleteTask(req.params.id);
+    deleteTask(taskId);
     res.status(204).send();
   });
 }
